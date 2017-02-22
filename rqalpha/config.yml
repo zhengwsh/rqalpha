@@ -114,3 +114,11 @@ mod:
     plot: ~
     plot_save_file: ~
     report_save_path: ~
+  vnpy:
+    gateway_name: CTP
+    ctp:
+      userID:
+      password:
+      brokerID:
+      tdAddress:
+      mdAddress:
