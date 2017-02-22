@@ -3,17 +3,14 @@
 from rqalpha.interface import AbstractBroker
 from rqalpha.trader.account import init_accounts
 
-from .vnpy_engine import get_engine
-
 
 class VNPYBroker(AbstractBroker):
-    def __init__(self, env):
+    def __init__(self, env, vnpy_engine):
         self.env = env
 
         self._accounts = None
 
-        self._engine = get_engine()
-        self._engine.set_broker(self)
+        self._engine = vnpy_engine
         self._vnpy_gateway_name = self.env.config.mod.vnpy.gateway_name
 
         self._account_cache = None

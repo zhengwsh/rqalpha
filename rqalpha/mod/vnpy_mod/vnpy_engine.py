@@ -44,7 +44,7 @@ def _order_book_id(symbol):
 
 
 class RQVNPYEngine(object):
-    def __init__(self):
+    def __init__(self, env):
         self.event_engine = EventEngine2()
         self.event_engine.start()
 
@@ -55,9 +55,9 @@ class RQVNPYEngine(object):
         self._vnpy_order_dict = {}
         self._open_order_dict = {}
         self._trade_dict = {}
-        self.contract_dict = {}
+        self._contract_dict = {}
 
-        self.broker = None
+        self._env = env
 
         self._register_event()
 
@@ -66,10 +66,6 @@ class RQVNPYEngine(object):
         return list(self._open_order_dict.values())
 
     def on_order(self, event):
-        broker = self.broker
-        if broker is None:
-            print('VNPY_mod needs a broker')
-
         vnpy_order = event.dict_['data']
         vnpy_order_id = vnpy_order.vtOrderID
 
@@ -79,9 +75,9 @@ class RQVNPYEngine(object):
             print('No Such order in rqalpha query.')
             return
         order._activate()
-        account = broker.get_account_for(order.order_book_id)
+        account = self._env.broker.get_account_for(order.order_book_id)
         account.on_order_creating(order)
-        broker.env.event_bus.publish_event(Events.ORDER_CREATION_PASS, account, order)
+        self._env.event_bus.publish_event(Events.ORDER_CREATION_PASS, account, order)
 
         self._vnpy_order_dict[order.order_id] = vnpy_order
         if vnpy_order.status == STATUS_NOTTRADED:
@@ -97,13 +93,9 @@ class RQVNPYEngine(object):
             order._mark_rejected('Order was rejected by vnpy.')
 
     def on_trade(self, event):
-        broker = self.broker
-        if broker is None:
-            print('VNPY_mod needs a broker')
-
         vnpy_trade = event.dict_['data']
         order = self._order_dict[vnpy_trade.vtOrderID]
-        account = self.broker.get_account_for(order.order_book_id)
+        account = self._env.broker.get_account_for(order.order_book_id)
         ct_amount = account.portfolio.positions[order.order_book_id]._cal_close_today_amount(vnpy_trade.volume,
                                                                                              order.side)
         trade = Trade.__from_create__(
@@ -117,23 +109,36 @@ class RQVNPYEngine(object):
         trade._commission = account.commission_decider.get_commission(trade)
         trade._tax = account.tax_decider.get_tax(trade)
         order._fill(trade)
-        account.on_order_trade(trade, broker.bar_dict)
-        broker.env.event_bus.publish_event(Events.TRADE, account, trade)
+        # FIXME: bar_dict 替换为 tick 相关对象
+        account.on_order_trade(trade, self._env.broker.bar_dict)
+        self._env.event_bus.publish_event(Events.TRADE, account, trade)
 
     def on_contract(self, event):
         contract = event.dict_['data']
         order_book_id = _order_book_id(contract.symbol)
-        self.contract_dict[order_book_id] = contract
+        self._contract_dict[order_book_id] = contract
 
     def on_tick(self, event):
-        pass
+        vnpy_tick = event.dict_['data']
+        tick = {
+            'order_book_id': _order_book_id(vnpy_tick.symbol),
+            'open': vnpy_tick.openPrice,
+            'low': vnpy_tick.lowPrice,
+            'high': vnpy_tick.highPrice,
+            'settlement': vnpy_tick.lastPrice,
+            'limit_up': vnpy_tick.upperLimit,
+            'limit_down': vnpy_tick.lowerLimit,
+            'volume': vnpy_tick.volume,
+            'open_interest': vnpy_tick.openInterest,
+            'datetime': parse('%s %s' % (vnpy_tick.date, vnpy_tick.time)),
+            'prev_close': vnpy_tick.preClosePrice,
+        }
+        self._env.event_source.put_tick(tick)
 
     def on_log(self, event):
         log = event.dict_['data']
+        # TODO: 调用rqalpha logger 模块
         print(log.logContent)
-
-    def set_broker(self, broker):
-        self.broker = broker
 
     def connect(self, gateway_name, login_dict):
         if gateway_name not in self.gateway_dict:
@@ -147,6 +152,8 @@ class RQVNPYEngine(object):
             return
 
         contract = self._get_contract_from_order_book_id(order.order_book_id)
+        if contract is None:
+            return
         order_req = VtOrderReq()
         order_req.symbol = contract.symbol
         order_req.exchange = contract.exchange
@@ -215,7 +222,7 @@ class RQVNPYEngine(object):
 
     def _get_contract_from_order_book_id(self, order_book_id):
         try:
-            return self.contract_dict[order_book_id]
+            return self._contract_dict[order_book_id]
         except KeyError:
             print('No such contract whose order_book_id is %s ' % order_book_id)
 
