@@ -16,16 +16,16 @@
 
 import jsonpickle
 
-from rqalpha.core.default_matcher import DefaultMatcher
 from rqalpha.interface import AbstractBroker, Persistable
 from rqalpha.utils import get_account_type
 from rqalpha.utils.i18n import gettext as _
 from rqalpha.events import Events
 from rqalpha.const import MATCHING_TYPE, ORDER_STATUS
-from rqalpha.trader.account.benchmark_account import BenchmarkAccount
 from rqalpha.const import ACCOUNT_TYPE
-from .stock_account import StockAccount
-from .future_account import FutureAccount
+from rqalpha.environment import Environment
+from rqalpha.model.account import BenchmarkAccount, StockAccount, FutureAccount
+
+from .matcher import Matcher
 
 
 def init_accounts(env):
@@ -54,10 +54,10 @@ class SimulationBroker(AbstractBroker, Persistable):
     def __init__(self, env):
         self._env = env
         if env.config.base.matching_type == MATCHING_TYPE.CURRENT_BAR_CLOSE:
-            self._matcher = DefaultMatcher(lambda bar: bar.close, env.config.validator.bar_limit)
+            self._matcher = Matcher(lambda bar: bar.close, env.config.validator.bar_limit)
             self._match_immediately = True
         else:
-            self._matcher = DefaultMatcher(lambda bar: bar.open, env.config.validator.bar_limit)
+            self._matcher = Matcher(lambda bar: bar.open, env.config.validator.bar_limit)
             self._match_immediately = False
 
         self._accounts = None
@@ -154,8 +154,9 @@ class SimulationBroker(AbstractBroker, Persistable):
         self._open_orders = self._delayed_orders
         self._delayed_orders = []
 
-    def bar(self, bar_dict, calendar_dt, trading_dt):
-        self._matcher.update(calendar_dt, trading_dt, bar_dict)
+    def bar(self, bar_dict):
+        env = Environment.get_instance()
+        self._matcher.update(env.calendar_dt, env.trading_dt, bar_dict)
         self._match()
 
     def tick(self):
