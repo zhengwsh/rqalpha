@@ -16,14 +16,14 @@
 
 from collections import defaultdict
 
-from ..utils.i18n import gettext as _
-from ..const import ORDER_TYPE, SIDE, BAR_STATUS
-from ..model.trade import Trade
-from ..environment import Environment
-from ..events import Events
+from rqalpha.utils.i18n import gettext as _
+from rqalpha.const import ORDER_TYPE, SIDE, BAR_STATUS
+from rqalpha.model.trade import Trade
+from rqalpha.environment import Environment
+from rqalpha.events import EVENT
 
 
-class DefaultMatcher(object):
+class Matcher(object):
     def __init__(self,
                  deal_price_decider,
                  bar_limit=True,
@@ -134,7 +134,7 @@ class DefaultMatcher(object):
             order._fill(trade)
             self._turnover[order.order_book_id] += fill
 
-            Environment.get_instance().event_bus.publish_event(Events.TRADE, account, trade)
+            Environment.get_instance().event_bus.publish_event(EVENT.TRADE, account, trade)
 
             if order.type == ORDER_TYPE.MARKET and order.unfilled_quantity != 0:
                 reason = _(

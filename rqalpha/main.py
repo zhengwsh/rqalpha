@@ -29,20 +29,20 @@ import six
 
 from . import const
 from .api import helper as api_helper
-from .core.default_strategy_loader import FileStrategyLoader, SourceCodeStrategyLoader
+from .core.strategy_loader import FileStrategyLoader, SourceCodeStrategyLoader
 from .core.strategy import Strategy
 from .core.strategy_universe import StrategyUniverse
+from .core.global_var import GlobalVars
+from .core.strategy_context import StrategyContext
 from .data.base_data_source import BaseDataSource
 from .data.data_proxy import DataProxy
 from .environment import Environment
-from .events import Events
+from .events import EVENT
 from .execution_context import ExecutionContext
 from .interface import Persistable
 from .mod.mod_handler import ModHandler
 from .model.bar import BarMap
-from .trader.account import MixedAccount
-from .trader.global_var import GlobalVars
-from .trader.strategy_context import StrategyContext
+from .model.account import MixedAccount
 from .utils import create_custom_exception, run_with_user_log_disabled
 from .utils.exception import CustomException, is_user_exc, patch_user_exc
 from .utils.i18n import gettext as _
@@ -154,15 +154,12 @@ def run(config, source_code=None):
     env = Environment(config)
     persist_helper = None
     init_succeed = False
+    mod_handler = ModHandler()
 
     try:
-        if source_code is None:
-            env.set_strategy_loader(FileStrategyLoader())
-        else:
-            env.set_strategy_loader(SourceCodeStrategyLoader())
-
+        env.set_strategy_loader(FileStrategyLoader() if source_code is None else SourceCodeStrategyLoader())
         env.set_global_vars(GlobalVars())
-        mod_handler = ModHandler(env)
+        mod_handler.set_env(env)
         mod_handler.start_up()
 
         if not env.data_source:
@@ -202,7 +199,7 @@ def run(config, source_code=None):
         env.calendar_dt = ExecutionContext.calendar_dt = start_dt
         env.trading_dt = ExecutionContext.trading_dt = start_dt
 
-        env.event_bus.publish_event(Events.POST_SYSTEM_INIT)
+        env.event_bus.publish_event(EVENT.POST_SYSTEM_INIT)
 
         scope = create_base_scope()
         scope.update({
@@ -212,16 +209,14 @@ def run(config, source_code=None):
         apis = api_helper.get_apis(config.base.account_list)
         scope.update(apis)
 
-        if source_code is None:
-            scope = env.strategy_loader.load(env.config.base.strategy_file, scope)
-        else:
-            scope = env.strategy_loader.load(source_code, scope)
+        scope = env.strategy_loader.load(env.config.base.strategy_file if source_code is None else source_code, scope)
 
         if env.config.extra.enable_profiler:
             enable_profiler(env, scope)
 
         ucontext = StrategyContext()
         user_strategy = Strategy(env.event_bus, scope, ucontext)
+        scheduler.set_user_context(ucontext)
 
         if not config.extra.force_run_init_when_pt_resume:
             with run_with_user_log_disabled(disabled=config.base.resume_mode):
@@ -259,9 +254,10 @@ def run(config, source_code=None):
             with run_with_user_log_disabled(disabled=False):
                 user_strategy.init()
 
-        for calendar_dt, trading_dt, event in event_source.events(config.base.start_date,
-                                                                  config.base.end_date,
-                                                                  config.base.frequency):
+        for event in event_source.events(config.base.start_date, config.base.end_date, config.base.frequency):
+            calendar_dt = event.calendar_dt
+            trading_dt = event.trading_dt
+            event_type = event.event_type
             ExecutionContext.calendar_dt = calendar_dt
             ExecutionContext.trading_dt = trading_dt
             env.calendar_dt = calendar_dt
@@ -269,32 +265,27 @@ def run(config, source_code=None):
             for account in accounts.values():
                 account.portfolio._current_date = trading_dt.date()
 
-            if event == Events.BEFORE_TRADING:
-                env.event_bus.publish_event(Events.PRE_BEFORE_TRADING)
-                scheduler.next_day_(trading_dt)
-                env.event_bus.publish_event(Events.BEFORE_TRADING)
-                with ExecutionContext(const.EXECUTION_PHASE.BEFORE_TRADING):
-                    scheduler.before_trading_(ucontext)
-                env.event_bus.publish_event(Events.POST_BEFORE_TRADING)
-            elif event == Events.BAR:
+            if event_type == EVENT.BEFORE_TRADING:
+                env.event_bus.publish_event(EVENT.PRE_BEFORE_TRADING)
+                env.event_bus.publish_event(EVENT.BEFORE_TRADING)
+                env.event_bus.publish_event(EVENT.POST_BEFORE_TRADING)
+            elif event_type == EVENT.BAR:
                 bar_dict.update_dt(calendar_dt)
-                env.event_bus.publish_event(Events.PRE_BAR)
-                env.event_bus.publish_event(Events.BAR, bar_dict, calendar_dt, trading_dt)
-                with ExecutionContext(const.EXECUTION_PHASE.SCHEDULED, bar_dict):
-                    scheduler.next_bar_(ucontext, bar_dict)
-                env.event_bus.publish_event(Events.POST_BAR)
-            elif event == Events.TICK:
-                env.event_bus.publish_event(Events.PRE_TICK)
-                env.event_bus.publish_event(Events.TICK)
-                env.event_bus.publish_event(Events.POST_TICK)
-            elif event == Events.AFTER_TRADING:
-                env.event_bus.publish_event(Events.PRE_AFTER_TRADING)
-                env.event_bus.publish_event(Events.AFTER_TRADING)
-                env.event_bus.publish_event(Events.POST_AFTER_TRADING)
-            elif event == Events.SETTLEMENT:
-                env.event_bus.publish_event(Events.PRE_SETTLEMENT)
-                env.event_bus.publish_event(Events.SETTLEMENT)
-                env.event_bus.publish_event(Events.POST_SETTLEMENT)
+                env.event_bus.publish_event(EVENT.PRE_BAR)
+                env.event_bus.publish_event(EVENT.BAR, bar_dict)
+                env.event_bus.publish_event(EVENT.POST_BAR)
+            elif event_type == EVENT.TICK:
+                env.event_bus.publish_event(EVENT.PRE_TICK)
+                env.event_bus.publish_event(EVENT.TICK, event.data['tick'])
+                env.event_bus.publish_event(EVENT.POST_TICK)
+            elif event_type == EVENT.AFTER_TRADING:
+                env.event_bus.publish_event(EVENT.PRE_AFTER_TRADING)
+                env.event_bus.publish_event(EVENT.AFTER_TRADING)
+                env.event_bus.publish_event(EVENT.POST_AFTER_TRADING)
+            elif event_type == EVENT.SETTLEMENT:
+                env.event_bus.publish_event(EVENT.PRE_SETTLEMENT)
+                env.event_bus.publish_event(EVENT.SETTLEMENT)
+                env.event_bus.publish_event(EVENT.POST_SETTLEMENT)
             else:
                 raise RuntimeError('unknown event from event source: {}'.format(event))
 
@@ -356,4 +347,4 @@ def output_profile_result(env):
     profile_output = stdout_trap.getvalue()
     profile_output = profile_output.rstrip()
     print(profile_output)
-    env.event_bus.publish_event(Events.ON_LINE_PROFILER_RESULT, profile_output)
+    env.event_bus.publish_event(EVENT.ON_LINE_PROFILER_RESULT, profile_output)

@@ -17,15 +17,15 @@
 import six
 import pandas as pd
 
-from rqalpha.trader.account.base_stock_account import BaseStockAccount
-from rqalpha.model.dividend import Dividend
-from rqalpha.const import SIDE, ACCOUNT_TYPE
-from rqalpha.utils.i18n import gettext as _
-from rqalpha.utils.logger import user_log, system_log
-from rqalpha.execution_context import ExecutionContext
+from .base_account import BaseAccount
+from ..dividend import Dividend
+from ...const import SIDE, ACCOUNT_TYPE
+from ...utils.i18n import gettext as _
+from ...utils.logger import user_log, system_log
+from ...execution_context import ExecutionContext
 
 
-class StockAccount(BaseStockAccount):
+class StockAccount(BaseAccount):
     def __init__(self, env, init_cash, start_date):
         super(StockAccount, self).__init__(env, init_cash, start_date, ACCOUNT_TYPE.STOCK)
 
@@ -81,7 +81,7 @@ class StockAccount(BaseStockAccount):
 
         self._handle_dividend_ex_dividend(trading_date)
 
-    def bar(self, bar_dict, calendar_dt, trading_dt):
+    def bar(self, bar_dict):
         portfolio = self.portfolio
         # invalidate cache
         portfolio._portfolio_value = None
@@ -92,6 +92,15 @@ class StockAccount(BaseStockAccount):
             if not bar.isnan:
                 position._market_value = position._quantity * bar.close
                 position._last_price = bar.close
+
+    def tick(self, tick):
+        portfolio = self.portfolio
+        # invalidate cache
+        portfolio._portfolio_value = None
+        position = portfolio.positions[tick.order_book_id]
+
+        position._market_value = position._quantity * tick.last_price
+        position._last_price = tick.last_price
 
     def order_pending_new(self, account, order):
         if self != account:
