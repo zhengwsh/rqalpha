@@ -1,17 +1,32 @@
 # encoding: UTF-8
 
 from rqalpha.interface import AbstractBroker
-from rqalpha.trader.account import init_accounts
+from rqalpha.model.account import BenchmarkAccount, StockAccount, FutureAccount
+from rqalpha.const import ACCOUNT_TYPE
+
+
+def init_accounts(env):
+    # FIXME: 从ctp获取获取账户信息，持仓等
+    accounts = {}
+    config = env.config
+    start_date = config.base.start_date
+    total_cash = 0
+    future_starting_cash = config.base.future_starting_cash
+    accounts[ACCOUNT_TYPE.FUTURE] = FutureAccount(env, future_starting_cash, start_date)
+    if config.base.benchmark is not None:
+        accounts[ACCOUNT_TYPE.BENCHMARK] = BenchmarkAccount(env, total_cash, start_date)
+
+    return accounts
 
 
 class VNPYBroker(AbstractBroker):
     def __init__(self, env, vnpy_engine):
-        self.env = env
+        self._env = env
 
         self._accounts = None
 
         self._engine = vnpy_engine
-        self._vnpy_gateway_name = self.env.config.mod.vnpy.gateway_name
+        self._vnpy_gateway_name = self._env.config.mod.vnpy.gateway_name
 
         self._account_cache = None
 
@@ -19,18 +34,12 @@ class VNPYBroker(AbstractBroker):
         self._vnpy_engine.exit()
 
     def before_trading(self):
-        login_dict = {
-            'userID': self.env.config.mod.vnpy.ctp.userID,
-            'password': self.env.config.mod.vnpy.ctp.password,
-            'brokerID': self.env.config.mod.vnpy.ctp.brokerID,
-            'tdAddress': self.env.config.mod.vnpy.ctp.tdAddress,
-            'mdAddress': self.env.config.mod.vnpy.ctp.mdAddress,
-        }
-        self._vnpy_engine.connect(self._vnpy_gateway_name, login_dict)
+        # TODO: CTP 登录放到此处
+        pass
 
     def get_accounts(self):
         if self._accounts is None:
-            self._accounts = init_accounts()
+            self._accounts = init_accounts(self._env)
         return self._accounts
 
     def get_open_orders(self):

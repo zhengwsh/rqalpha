@@ -73,7 +73,7 @@ mod:
   # 回测 / 模拟交易 支持 Mod
   simulation:
     lib: 'rqalpha.mod.simulation'
-    enabled: true
+    enabled: false
     priority: 100
   # 技术分析API
   funcat_api:
@@ -100,7 +100,7 @@ mod:
     priority: 600
   risk_manager:
     lib: 'rqalpha.mod.risk_manager'
-    enabled: true
+    enabled: false
     priority: 700
     # available_cash: 查可用资金是否充足，默认开启
     available_cash: true
@@ -108,13 +108,16 @@ mod:
     available_position: true
   analyser:
     priority: 100
-    enabled: true
+    enabled: false
     lib: 'rqalpha.mod.analyser'
     output_file: ~
     plot: ~
     plot_save_file: ~
     report_save_path: ~
   vnpy:
+    lib: rqalpha.mod.vnpy_mod
+    enable: true
+    priority: 200
     gateway_name: CTP
     ctp:
       userID:
