@@ -111,7 +111,7 @@ mod:
     report_save_path: ~
   vnpy:
     lib: rqalpha.mod.vnpy_mod
-    enable: true
+    enabled: true
     priority: 200
     gateway_name: CTP
     ctp:
