@@ -113,7 +113,7 @@ class RQVNPYEngine(object):
         trade._commission = account.commission_decider.get_commission(trade)
         trade._tax = account.tax_decider.get_tax(trade)
         order._fill(trade)
-        self._env.event_bus.publish_event(EVEVT.TRADE, account, trade)
+        self._env.event_bus.publish_event(EVENT.TRADE, account, trade)
 
     def on_contract(self, event):
         contract = event.dict_['data']
@@ -127,6 +127,7 @@ class RQVNPYEngine(object):
             'open': vnpy_tick.openPrice,
             'low': vnpy_tick.lowPrice,
             'high': vnpy_tick.highPrice,
+            'last_price': vnpy_tick.lastPrice,
             'settlement': vnpy_tick.lastPrice,
             'limit_up': vnpy_tick.upperLimit,
             'limit_down': vnpy_tick.lowerLimit,
@@ -144,6 +145,7 @@ class RQVNPYEngine(object):
 
     def on_universe_changed(self, universe):
         for order_book_id in universe:
+            # TODO need mapping
             self.subscribe(order_book_id)
 
     def connect(self):

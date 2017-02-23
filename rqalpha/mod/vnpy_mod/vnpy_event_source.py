@@ -3,6 +3,7 @@ from datetime import timedelta, datetime
 
 from rqalpha.interface import AbstractEventSource
 from rqalpha.events import Event, EVENT
+from rqalpha.utils import RqAttrDict
 
 
 class VNPYEventSource(AbstractEventSource):
@@ -25,13 +26,14 @@ class VNPYEventSource(AbstractEventSource):
                 continue
 
             tick = self._engine.get_tick()
+
             calendar_dt = tick['datetime']
-            if calendar_dt > end_date:
-                break
+            # if calendar_dt > end_date:
+            #     break
 
             if calendar_dt.hour > 20:
                 trading_dt = calendar_dt + timedelta(days=1)
             else:
                 trading_dt = calendar_dt
 
-            yield Event(EVENT.TICK, calendar_dt, trading_dt, tick)
+            yield Event(EVENT.TICK, calendar_dt, trading_dt, {"tick": RqAttrDict(tick)})
