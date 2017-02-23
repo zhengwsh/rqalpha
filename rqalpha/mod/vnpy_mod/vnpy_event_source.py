@@ -2,7 +2,7 @@ from queue import Queue
 from datetime import timedelta, datetime
 
 from rqalpha.interface import AbstractEventSource
-from rqalpha.events import Events
+from rqalpha.events import Event, EVENT
 
 
 class VNPYEventSource(AbstractEventSource):
@@ -22,10 +22,10 @@ class VNPYEventSource(AbstractEventSource):
                 calendar_dt = tick['datetime']
                 if calendar_dt > end_date:
                     break
-                # TODO 验证逻辑是否正确
-                dt_before_night_trading = calendar_dt.replace(hour=20, minute=30, second=0, microsecond=0)
-                if calendar_dt > dt_before_night_trading:
+
+                if calendar_dt.hour > 20:
                     trading_dt = calendar_dt + timedelta(days=1)
                 else:
                     trading_dt = calendar_dt
-                yield calendar_dt, trading_dt, Events.BAR
+
+                yield Event(EVENT.TICK, calendar_dt, trading_dt, tick)

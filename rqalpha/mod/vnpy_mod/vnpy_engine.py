@@ -2,7 +2,7 @@ from dateutil.parser import parse
 
 from rqalpha.const import SIDE, ORDER_TYPE, POSITION_EFFECT
 from rqalpha.model.trade import Trade
-from rqalpha.events import Events
+from rqalpha.events import EVENT
 
 from .vn_trader.eventEngine import EventEngine2
 from .vn_trader.vtGateway import VtOrderReq, VtCancelOrderReq, VtSubscribeReq
@@ -44,11 +44,13 @@ def _order_book_id(symbol):
 
 
 class RQVNPYEngine(object):
-    def __init__(self, env):
+    def __init__(self, env, gateway_name):
         self.event_engine = EventEngine2()
         self.event_engine.start()
 
-        self.gateway_dict = {}
+        self.vnpy_gateway = None
+
+        self.gateway_name = gateway_name
         self._init_gateway()
 
         self._order_dict = {}
@@ -74,15 +76,15 @@ class RQVNPYEngine(object):
         except KeyError:
             print('No Such order in rqalpha query.')
             return
-        order._activate()
+
         account = self._env.broker.get_account_for(order.order_book_id)
-        account.on_order_creating(order)
-        self._env.event_bus.publish_event(Events.ORDER_CREATION_PASS, account, order)
+
+        order._activate()
+
+        self._env.event_bus.publish_event(EVENT.ORDER_CREATION_PASS, account, order)
 
         self._vnpy_order_dict[order.order_id] = vnpy_order
-        if vnpy_order.status == STATUS_NOTTRADED:
-            self._open_order_dict[vnpy_order_id] = order
-        elif vnpy_order.status == STATUS_PARTTRADED:
+        if vnpy_order.status == STATUS_NOTTRADED or vnpy_order.status == STATUS_PARTTRADED:
             self._open_order_dict[vnpy_order_id] = order
         elif vnpy_order.status == STATUS_ALLTRADED:
             if vnpy_order_id in self._open_order_dict:
@@ -90,7 +92,7 @@ class RQVNPYEngine(object):
         elif vnpy_order.status == STATUS_CANCELLED:
             if vnpy_order_id in self._open_order_dict:
                 del self._open_order_dict[vnpy_order_id]
-            order._mark_rejected('Order was rejected by vnpy.')
+            order._mark_rejected('Order was rejected or cancelled by vnpy.')
 
     def on_trade(self, event):
         vnpy_trade = event.dict_['data']
@@ -109,9 +111,7 @@ class RQVNPYEngine(object):
         trade._commission = account.commission_decider.get_commission(trade)
         trade._tax = account.tax_decider.get_tax(trade)
         order._fill(trade)
-        # FIXME: bar_dict 替换为 tick 相关对象
-        account.on_order_trade(trade, self._env.broker.bar_dict)
-        self._env.event_bus.publish_event(Events.TRADE, account, trade)
+        self._env.event_bus.publish_event(EVEVT.TRADE, account, trade)
 
     def on_contract(self, event):
         contract = event.dict_['data']
@@ -140,20 +140,26 @@ class RQVNPYEngine(object):
         # TODO: 调用rqalpha logger 模块
         print(log.logContent)
 
-    def connect(self, gateway_name, login_dict):
-        if gateway_name not in self.gateway_dict:
-            print('No Gateway named %s' % gateway_name)
-            return
-        self.gateway_dict[gateway_name].connect(login_dict)
+    def on_universe_changed(self):
+        for order_book_id in self._env.universe:
+            self.subscribe(order_book_id)
 
-    def send_order(self, order, gateway_name):
-        if gateway_name not in self.gateway_dict:
-            print('No Gateway named %s' % gateway_name)
-            return
+    def connect(self, login_dict):
+        self.vnpy_gateway.connect(login_dict)
+
+    def send_order(self, order):
+        account = self._env.broker.get_account_for(order.order_book_id)
+        self._env.event_bus.publish_event(EVENT.ORDER_PENDING_NEW, account, order)
+
+        account.append_order(order)
 
         contract = self._get_contract_from_order_book_id(order.order_book_id)
         if contract is None:
+            order._mark_cancelled('No contract exists whose order_book_id is %s' % order.order_book_id)
+
+        if order._is_final():
             return
+
         order_req = VtOrderReq()
         order_req.symbol = contract.symbol
         order_req.exchange = contract.exchange
@@ -165,31 +171,24 @@ class RQVNPYEngine(object):
         order_req.currency = CURRENCY_CNY
         order_req.productClass = PRODUCT_FUTURES
 
-        vnpy_order_id = self.gateway_dict[gateway_name].sendOrder(order_req)
+        vnpy_order_id = self.vnpy_gateway.sendOrder(order_req)
         self._order_dict[vnpy_order_id] = order
 
-    def cancel_order(self, order, gateway_name):
-        if gateway_name not in self.gateway_dict:
-            print('No Gateway named %s' % gateway_name)
-            return
+    def cancel_order(self, order):
+        account = self._env.broker.get_account_for(order.order_book_id)
+        self._env.event_bus.publish_event(EVENT.ORDER_PENDING_CANCEL, account, order)
 
-        try:
-            vnpy_order = self._vnpy_order_dict[order.order_id]
-        except KeyError:
-            print('No such order.')
-            return
+        vnpy_order = self._vnpy_order_dict[order.order_id]
 
         cancel_order_req = VtCancelOrderReq()
         cancel_order_req.symbol = vnpy_order.symbol
         cancel_order_req.exchange = vnpy_order.exchange
         cancel_order_req.sessionID = vnpy_order.sessionID
         cancel_order_req.orderID = vnpy_order.orderID
-        self.gateway_dict[gateway_name].cancelOrder(cancel_order_req)
 
-    def sucscribe(self, order_book_id, gateway_name):
-        if gateway_name not in self.gateway_dict:
-            print('No Gateway named %s' % gateway_name)
-            return
+        self.vnpy_gateway.cancelOrder(cancel_order_req)
+
+    def subscribe(self, order_book_id):
         contract = self._get_contract_from_order_book_id(order_book_id)
         if contract is None:
             return
@@ -198,20 +197,22 @@ class RQVNPYEngine(object):
         subscribe_req.exchange = contract.exchange
         subscribe_req.productClass = PRODUCT_FUTURES
         subscribe_req.currency = CURRENCY_CNY
-        self.gateway_dict[gateway_name].subscribe(subscribe_req)
+        self.vnpy_gateway.subscribe(subscribe_req)
 
     def exit(self):
-        for gateway in self.gateway_dict.values():
-            gateway.close()
+        self.vnpy_gateway.close()
         self.event_engine.stop()
 
     def _init_gateway(self):
-        try:
-            from .vn_trader.ctpGateway.ctpGateway import CtpGateway
-            self.gateway_dict['CTP'] = CtpGateway(self.event_engine, 'CTP')
-            self.gateway_dict['CTP'].setQryEnabled(True)
-        except ImportError:
-            print('No Gateway named CTP')
+        if self.gateway_name == 'CTP':
+            try:
+                from .vn_trader.ctpGateway.ctpGateway import CtpGateway
+                self.vnpy_gateway = CtpGateway(self.event_engine, 'CTP')
+                self.vnpy_gateway.setQryEnabled(True)
+            except ImportError:
+                print('No Gateway named CTP')
+        else:
+            print('No Gateway named %s' % self.gateway_name)
 
     def _register_event(self):
         self.event_engine.register(EVENT_ORDER, self.on_order)
@@ -220,15 +221,10 @@ class RQVNPYEngine(object):
         self.event_engine.register(EVENT_TICK, self.on_tick)
         self.event_engine.register(EVENT_LOG, self.on_log)
 
+        self._env.event_bus.add_listener(EVENT.POST_UNIVERSE_CHANGED, self.on_universe_changed())
+
     def _get_contract_from_order_book_id(self, order_book_id):
         try:
             return self._contract_dict[order_book_id]
         except KeyError:
             print('No such contract whose order_book_id is %s ' % order_book_id)
-
-
-def get_engine():
-    global _engine
-    if _engine is None:
-        _engine = RQVNPYEngine()
-    return _engine
