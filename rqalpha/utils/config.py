@@ -24,7 +24,7 @@ import codecs
 
 from . import RqAttrDict, logger
 from .exception import patch_user_exc
-from .logger import user_log, system_log, std_log, user_std_handler
+from .logger import user_log, user_system_log, system_log, std_log, user_std_handler
 from ..const import ACCOUNT_TYPE, MATCHING_TYPE, RUN_TYPE, PERSIST_MODE
 from ..utils.i18n import gettext as _
 from ..utils.dict_func import deep_update
@@ -33,7 +33,13 @@ from ..mod.utils import mod_config_value_parse
 
 def parse_config(config_args, base_config_path=None, click_type=True, source_code=None):
     if base_config_path is None:
-        config_path = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../config.yml"))
+        config_path = os.path.abspath(os.path.expanduser("~/.rqalpha/config.yml"))
+        if not os.path.exists(config_path):
+            dir_path = os.path.dirname(config_path)
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path)
+            default_config_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../config_template.yml")
+            open(config_path, "wb").write(open(default_config_path, "rb").read())
     else:
         config_path = base_config_path
     if not os.path.exists(config_path):
@@ -109,8 +115,11 @@ def parse_config(config_args, base_config_path=None, click_type=True, source_cod
     base_config.matching_type = parse_matching_type(base_config.matching_type)
     base_config.persist_mode = parse_persist_mode(base_config.persist_mode)
 
-    if extra_config.log_level == "verbose":
+    if extra_config.log_level.upper() != "NONE":
         user_log.handlers.append(user_std_handler)
+        if not extra_config.user_system_log_disabled:
+            user_system_log.handlers.append(user_std_handler)
+
     if extra_config.context_vars:
         import base64
         import json
@@ -127,6 +136,8 @@ def parse_config(config_args, base_config_path=None, click_type=True, source_cod
 
     system_log.level = getattr(logbook, extra_config.log_level.upper(), logbook.NOTSET)
     std_log.level = getattr(logbook, extra_config.log_level.upper(), logbook.NOTSET)
+    user_log.level = getattr(logbook, extra_config.log_level.upper(), logbook.NOTSET)
+    user_system_log.level = getattr(logbook, extra_config.log_level.upper(), logbook.NOTSET)
 
     if base_config.frequency == "1d":
         logger.DATETIME_FORMAT = "%Y-%m-%d"

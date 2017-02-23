@@ -1,7 +1,22 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright 2017 Ricequant, Inc
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import pickle
-from collections import OrderedDict, defaultdict
+from collections import defaultdict
 
 import six
 from enum import Enum
@@ -24,17 +39,20 @@ class AnalyserMod(AbstractMod):
         self._result = None
 
         self._orders = defaultdict(list)
-        self._trades = defaultdict(list)
-        self._portfolios = OrderedDict()
-        self._portfolios_dict = defaultdict(OrderedDict)
+        self._trades = []
+        self._total_portfolios = []
+        self._sub_portfolios = defaultdict(list)
+        self._positions = defaultdict(list)
 
         self._benchmark_daily_returns = []
         self._portfolio_daily_returns = []
+        self._latest_portfolio = None
+        self._latest_benchmark_portfolio = None
 
     def start_up(self, env, mod_config):
         self._env = env
         self._mod_config = mod_config
-        self._enabled = (self._mod_config.plot or self._mod_config.output_file or
+        self._enabled = (self._mod_config.record or self._mod_config.plot or self._mod_config.output_file or
                          self._mod_config.plot_save_file or self._mod_config.report_save_path)
 
         if self._enabled:
@@ -43,27 +61,30 @@ class AnalyserMod(AbstractMod):
             env.event_bus.add_listener(EVENT.ORDER_CREATION_PASS, self._collect_order)
 
     def _collect_trade(self, account, trade):
-        self._trades[trade.trading_datetime.date()].append(trade)
+        self._trades.append(self._to_trade_record(trade))
 
     def _collect_order(self, account, order):
         self._orders[order.trading_datetime.date()].append(order)
 
     def _collect_daily(self):
-        try:
-            benchmark_daily_returns = self._env.accounts[ACCOUNT_TYPE.BENCHMARK].portfolio.daily_returns
-        except KeyError:
-            benchmark_daily_returns = 0
-
         date = self._env.calendar_dt.date()
         portfolio = self._env.account.get_portfolio(date)
-        self._benchmark_daily_returns.append(benchmark_daily_returns)
+
+        self._latest_portfolio = portfolio
         self._portfolio_daily_returns.append(portfolio.daily_returns)
+        self._total_portfolios.append(self._to_portfolio_record(date, portfolio))
 
-        self._portfolios[date] = portfolio
+        if ACCOUNT_TYPE.BENCHMARK in self._env.accounts:
+            self._latest_benchmark_portfolio = self._env.accounts[ACCOUNT_TYPE.BENCHMARK].portfolio
+            self._benchmark_daily_returns.append(self._latest_benchmark_portfolio.daily_returns)
+        else:
+            self._benchmark_daily_returns.append(0)
 
-        # 单独分账号保存自己的
         for account_type, account in six.iteritems(self._env.accounts):
-            self._portfolios_dict[account_type][date] = account.get_portfolio(date)
+            portfolio = account.get_portfolio(date)
+            self._sub_portfolios[account_type].append(self._to_portfolio_record2(date, portfolio))
+            for order_book_id, position in six.iteritems(portfolio.positions):
+                self._positions[account_type].append(self._to_position_record(date, order_book_id, position))
 
     def _symbol(self, order_book_id):
         return self._env.data_proxy.instruments(order_book_id).symbol
@@ -149,42 +170,20 @@ class AnalyserMod(AbstractMod):
             'max_drawdown': self._safe_convert(risk.max_drawdown, 3),
         })
 
-        latest_portfolio = list(self._portfolios.values())[-1]
         summary.update({
-            k: self._safe_convert(v, 3) for k, v in six.iteritems(properties(latest_portfolio))
+            k: self._safe_convert(v, 3) for k, v in six.iteritems(properties(self._latest_portfolio))
             if k not in ["positions", "daily_returns", "daily_pnl"]
         })
 
-        if ACCOUNT_TYPE.BENCHMARK in self._portfolios_dict:
-            latest_benchmark_portfolio = list(self._portfolios_dict[ACCOUNT_TYPE.BENCHMARK].values())[-1]
-            summary['benchmark_total_returns'] = latest_benchmark_portfolio.total_returns
-            summary['benchmark_annualized_returns'] = latest_benchmark_portfolio.annualized_returns
+        if self._latest_benchmark_portfolio:
+            summary['benchmark_total_returns'] = self._latest_benchmark_portfolio.total_returns
+            summary['benchmark_annualized_returns'] = self._latest_benchmark_portfolio.annualized_returns
 
-        total_portfolio_list = []
-        for date, portfolio in six.iteritems(self._portfolios):
-            total_portfolio_list.append(self._to_portfolio_record(date, portfolio))
-
-        positions_list_dict = defaultdict(list)
-        portfolios_list_dict = defaultdict(list)
-        for account_type, portfolio_order_dict in six.iteritems(self._portfolios_dict):
-            positions_list = positions_list_dict[account_type]
-            portfolios_list = portfolios_list_dict[account_type]
-
-            for date, portfolio in six.iteritems(portfolio_order_dict):
-                portfolios_list.append(self._to_portfolio_record2(date, portfolio))
-
-                for order_book_id, position in six.iteritems(portfolio.positions):
-                    positions_list.append(self._to_position_record(date, order_book_id, position))
-
-        trades_list = []
-        for date in six.iterkeys(self._portfolios):
-            for trade in self._trades[date]:
-                trades_list.append(self._to_trade_record(trade))
-        trades = pd.DataFrame(trades_list)
+        trades = pd.DataFrame(self._trades)
         if 'datetime' in trades.columns:
             trades = trades.set_index('datetime')
 
-        df = pd.DataFrame(total_portfolio_list)
+        df = pd.DataFrame(self._total_portfolios)
         df['date'] = pd.to_datetime(df['date'])
         total_portfolios = df.set_index('date').sort_index()
 
@@ -209,13 +208,13 @@ class AnalyserMod(AbstractMod):
 
         for account_type, account in six.iteritems(self._env.accounts):
             account_name = account_type.name.lower()
-            portfolios_list = portfolios_list_dict[account_type]
+            portfolios_list = self._sub_portfolios[account_type]
             df = pd.DataFrame(portfolios_list)
             df["date"] = pd.to_datetime(df["date"])
             portfolios_df = df.set_index("date").sort_index()
             result_dict["{}_portfolios".format(account_name)] = portfolios_df
 
-            positions_list = positions_list_dict[account_type]
+            positions_list = self._positions[account_type]
             positions_df = pd.DataFrame(positions_list)
             if "date" in positions_df.columns:
                 positions_df["date"] = pd.to_datetime(positions_df["date"])
