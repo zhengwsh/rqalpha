@@ -1,4 +1,5 @@
 # encoding: UTF-8
+from time import time
 
 from rqalpha.interface import AbstractBroker
 from rqalpha.model.account import BenchmarkAccount, StockAccount, FutureAccount
@@ -30,6 +31,16 @@ class VNPYBroker(AbstractBroker):
 
         self._account_cache = None
 
+    def _init_account(self):
+        self._accounts = {
+            ACCOUNT_TYPE.FUTURE: FutureAccount(
+                self._env,
+                self._env.config.base.start_date,
+                self._env.config.base.future_starting_cash
+            )}
+        self._accounts[ACCOUNT_TYPE.FUTURE].set_state(self._engine.get_account_json())
+        self._engine.init_account_timestamp = time()
+
     def after_trading(self):
         self._vnpy_engine.exit()
 
@@ -38,7 +49,8 @@ class VNPYBroker(AbstractBroker):
 
     def get_accounts(self):
         if self._accounts is None:
-            self._accounts = init_accounts(self._env)
+            # FIXME: 明确self._init_account 调用时间，必须在缓存完成后才能调用
+            self._init_account()
         return self._accounts
 
     def get_open_orders(self):

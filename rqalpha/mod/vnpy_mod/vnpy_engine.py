@@ -21,6 +21,8 @@ from .vn_trader.vtConstant import STATUS_NOTTRADED, STATUS_PARTTRADED, STATUS_AL
 from .vn_trader.vtConstant import CURRENCY_CNY
 from .vn_trader.vtConstant import PRODUCT_FUTURES
 
+from .account_cache import AccountCache
+
 SIDE_MAPPING = {
     SIDE.BUY: DIRECTION_LONG,
     SIDE.SELL: DIRECTION_SHORT
@@ -59,6 +61,18 @@ def _order_book_id(symbol):
     return order_book_id.upper()
 
 
+def create_order_from_trade(vnpy_trade):
+    return Order.__from_create__(
+        calendar_dt=vnpy_trade.tradeTime,
+        trading_dt=vnpy_trade.tradeTime,
+        order_book_id=_order_book_id(vnpy_trade.symbol),
+        quantity=vnpy_trade.volume,
+        side=SIDE_REVERSE[vnpy_trade.direction],
+        style=LimitOrder(vnpy_trade.price),
+        position_effect=POSITION_EFFECT_REVERSE[vnpy_trade.offset]
+    )
+
+
 class RQVNPYEngine(object):
     def __init__(self, env, config):
         self._env = env
@@ -78,7 +92,7 @@ class RQVNPYEngine(object):
         self._open_order_dict = {}
         self._trade_dict = {}
         self._contract_dict = {}
-        self._account_cache = {}
+        self._account_cache = AccountCache()
         self._tick_que = Queue()
 
         self._register_event()
@@ -120,7 +134,7 @@ class RQVNPYEngine(object):
             order = self._order_dict[vnpy_trade.vtOrderID]
         except KeyError:
             if vnpy_trade.tradeTime > self.init_account_timestamp:
-                order = self.create_order_from_trade(vnpy_trade)
+                order = create_order_from_trade(vnpy_trade)
             else:
                 return
 
@@ -195,6 +209,15 @@ class RQVNPYEngine(object):
         }
         self._tick_que.put(tick)
 
+    def on_positions(self, event):
+        vnpy_position = event.dict_['data']
+        order_book_id = _order_book_id(vnpy_position.symbol)
+        self._account_cache.update(order_book_id, vnpy_position)
+
+    def on_account(self, event):
+        vnpy_account = event.dict_['data']
+        self._account_cache.update_portfolio(vnpy_account)
+
     def on_log(self, event):
         log = event.dict_['data']
         # TODO: 调用rqalpha logger 模块
@@ -203,17 +226,6 @@ class RQVNPYEngine(object):
     def on_universe_changed(self, universe):
         for order_book_id in universe:
             self.subscribe(order_book_id)
-
-    def create_order_from_trade(self, vnpy_trade):
-        return Order.__from_create__(
-            calendar_dt=vnpy_trade.tradeTime,
-            trading_dt=vnpy_trade.tradeTime,
-            order_book_id=_order_book_id(vnpy_trade.symbol),
-            quantity=volume,
-            side=SIDE_REVERSE[vnpy_trade.direction],
-            style=LimitOrder(vnpy_trade.price),
-            position_effect=POSITIO0N_EFFECT_REVERSE[vnpy_trade.offset]
-        )
 
     def connect(self):
         self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
@@ -276,6 +288,9 @@ class RQVNPYEngine(object):
     def qry_account(self):
         self.vnpy_gateway.qryAccount()
         self.vnpy_gateway.qryPosition()
+
+    def get_account_json(self):
+        return self._account_cache.get_state()
 
     def wait_until_connected(self, timeout=None):
         start_time = time()
