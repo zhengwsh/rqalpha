@@ -1,10 +1,13 @@
 # encoding: UTF-8
 
 # 系统模块
+import os
 from Queue import Queue, Empty
 from threading import Thread
 from time import sleep
 from collections import defaultdict
+
+from rqalpha.utils.logger import system_log
 
 # 自己开发的模块
 from eventType import *
@@ -47,6 +50,10 @@ class EventEngine2(object):
                 self.__process(event)
             except Empty:
                 pass
+            except Exception as e:
+                system_log.exception("event engine process fail")
+                system_log.error("We can not handle this exception exiting.")
+                os._exit(-1)
             
     #----------------------------------------------------------------------
     def __process(self, event):
