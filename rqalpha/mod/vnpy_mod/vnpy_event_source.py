@@ -28,7 +28,7 @@ class VNPYEventSource(AbstractEventSource):
                 continue
 
             tick = self._engine.get_tick()
-            system_log.debug("VNPYEventSource: tick {}", tick.__dict__)
+            system_log.debug("VNPYEventSource: tick {}", tick)
 
             calendar_dt = tick['datetime']
             # if calendar_dt > end_date:

@@ -105,6 +105,7 @@ class RQVNPYEngine(object):
 
     def on_order(self, event):
         vnpy_order = event.dict_['data']
+        system_log.debug("on_order {}", vnpy_order.__dict__)
         vnpy_order_id = vnpy_order.vtOrderID
 
         try:
@@ -132,6 +133,7 @@ class RQVNPYEngine(object):
 
     def on_trade(self, event):
         vnpy_trade = event.dict_['data']
+        system_log.debug("on_trade {}", vnpy_trade.__dict__)
         try:
             order = self._order_dict[vnpy_trade.vtOrderID]
         except KeyError:
@@ -158,6 +160,7 @@ class RQVNPYEngine(object):
 
     def on_contract(self, event):
         contract = event.dict_['data']
+        system_log.debug("on_contract {}", contract.__dict__)
         order_book_id = _order_book_id(contract.symbol)
         self._contract_dict[order_book_id] = contract
 
@@ -213,11 +216,13 @@ class RQVNPYEngine(object):
 
     def on_positions(self, event):
         vnpy_position = event.dict_['data']
+        system_log.debug("on_positions {}", vnpy_position.__dict__)
         order_book_id = _order_book_id(vnpy_position.symbol)
         self._account_cache.update(order_book_id, vnpy_position)
 
     def on_account(self, event):
         vnpy_account = event.dict_['data']
+        system_log.debug("on_account {}", vnpy_account.__dict__)
         self._account_cache.update_portfolio(vnpy_account)
 
     def on_log(self, event):
@@ -287,8 +292,9 @@ class RQVNPYEngine(object):
     def get_tick(self):
         while True:
             try:
-                return self._tick_que.get(timeout=1)
+                return self._tick_que.get(block=True, timeout=1)
             except Empty:
+                system_log.debug("get tick timeout")
                 continue
 
     def qry_account(self):
