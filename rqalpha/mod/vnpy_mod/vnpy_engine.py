@@ -6,6 +6,7 @@ import numpy as np
 
 from rqalpha.const import SIDE, ORDER_TYPE, POSITION_EFFECT
 from rqalpha.model.trade import Trade
+from rqalpha.model.order import Order, LimitOrder
 from rqalpha.events import EVENT
 from rqalpha.utils import get_account_type
 
@@ -25,6 +26,11 @@ SIDE_MAPPING = {
     SIDE.SELL: DIRECTION_SHORT
 }
 
+SIDE_REVERSE = {
+    DIRECTION_LONG: SIDE.BUY,
+    DIRECTION_SHORT: SIDE.SELL,
+}
+
 ORDER_TYPE_MAPPING = {
     ORDER_TYPE.MARKET: PRICETYPE_MARKETPRICE,
     ORDER_TYPE.LIMIT: PRICETYPE_LIMITPRICE
@@ -33,6 +39,11 @@ ORDER_TYPE_MAPPING = {
 POSITION_EFFECT_MAPPING = {
     POSITION_EFFECT.OPEN: OFFSET_OPEN,
     POSITION_EFFECT.CLOSE: OFFSET_CLOSE,
+}
+
+POSITION_EFFECT_REVERSE = {
+    OFFSET_OPEN: POSITION_EFFECT.OPEN,
+    OFFSET_CLOSE: POSITION_EFFECT.CLOSE,
 }
 
 _engine = None
@@ -57,6 +68,8 @@ class RQVNPYEngine(object):
 
         self.gateway_type = None
         self.vnpy_gateway = None
+        # TODO: 记录账户初始化时间
+        self.init_account_timestamp = None
 
         self._init_gateway()
 
@@ -103,14 +116,21 @@ class RQVNPYEngine(object):
 
     def on_trade(self, event):
         vnpy_trade = event.dict_['data']
-        order = self._order_dict[vnpy_trade.vtOrderID]
+        try:
+            order = self._order_dict[vnpy_trade.vtOrderID]
+        except KeyError:
+            if vnpy_trade.tradeTime > self.init_account_timestamp:
+                order = self.create_order_from_trade(vnpy_trade)
+            else:
+                return
+
         account = self._get_account_for(order)
         ct_amount = account.portfolio.positions[order.order_book_id]._cal_close_today_amount(vnpy_trade.volume,
                                                                                              order.side)
         trade = Trade.__from_create__(
             order=order,
             calendar_dt=order.datetime,
-            trading_dt=order.trading_datetime,
+            trading_dt=vnpy_trade.tradeTime,
             price=vnpy_trade.price,
             amount=vnpy_trade.volume,
             close_today_amount=ct_amount
@@ -183,6 +203,17 @@ class RQVNPYEngine(object):
     def on_universe_changed(self, universe):
         for order_book_id in universe:
             self.subscribe(order_book_id)
+
+    def create_order_from_trade(self, vnpy_trade):
+        return Order.__from_create__(
+            calendar_dt=vnpy_trade.tradeTime,
+            trading_dt=vnpy_trade.tradeTime,
+            order_book_id=_order_book_id(vnpy_trade.symbol),
+            quantity=volume,
+            side=SIDE_REVERSE[vnpy_trade.direction],
+            style=LimitOrder(vnpy_trade.price),
+            position_effect=POSITIO0N_EFFECT_REVERSE[vnpy_trade.offset]
+        )
 
     def connect(self):
         self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
