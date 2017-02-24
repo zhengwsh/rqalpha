@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dateutil.parser import parse
 from Queue import Queue
+import numpy as np
 
 from rqalpha.const import SIDE, ORDER_TYPE, POSITION_EFFECT
 from rqalpha.model.trade import Trade
@@ -122,19 +123,51 @@ class RQVNPYEngine(object):
 
     def on_tick(self, event):
         vnpy_tick = event.dict_['data']
+        print vnpy_tick.__dict__
         tick = {
             'order_book_id': _order_book_id(vnpy_tick.symbol),
+            'datetime': parse('%s %s' % (vnpy_tick.date, vnpy_tick.time)),
             'open': vnpy_tick.openPrice,
+            'last': vnpy_tick.lastPrice,
             'low': vnpy_tick.lowPrice,
             'high': vnpy_tick.highPrice,
-            'last_price': vnpy_tick.lastPrice,
-            'settlement': vnpy_tick.lastPrice,
+            'prev_close': vnpy_tick.preClosePrice,
+            'volume': vnpy_tick.volume,
+            'total_turnover': np.nan,
+            'open_interest': vnpy_tick.openInterest,
+            'prev_settlement': np.nan,
+
+            'bid': [
+                vnpy_tick.bidPrice1,
+                vnpy_tick.bidPrice2,
+                vnpy_tick.bidPrice3,
+                vnpy_tick.bidPrice4,
+                vnpy_tick.bidPrice5,
+            ],
+            'bid_volume': [
+                vnpy_tick.bidVolume1,
+                vnpy_tick.bidVolume2,
+                vnpy_tick.bidVolume3,
+                vnpy_tick.bidVolume4,
+                vnpy_tick.bidVolume5,
+            ],
+            'ask': [
+                vnpy_tick.askPrice1,
+                vnpy_tick.askPrice2,
+                vnpy_tick.askPrice3,
+                vnpy_tick.askPrice4,
+                vnpy_tick.askPrice5,
+            ],
+            'ask_volume': [
+                vnpy_tick.askVolume1,
+                vnpy_tick.askVolume2,
+                vnpy_tick.askVolume3,
+                vnpy_tick.askVolume4,
+                vnpy_tick.askVolume5,
+            ],
+
             'limit_up': vnpy_tick.upperLimit,
             'limit_down': vnpy_tick.lowerLimit,
-            'volume': vnpy_tick.volume,
-            'open_interest': vnpy_tick.openInterest,
-            'datetime': parse('%s %s' % (vnpy_tick.date, vnpy_tick.time)),
-            'prev_close': vnpy_tick.preClosePrice,
         }
         self._tick_que.put(tick)
 

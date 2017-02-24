@@ -690,6 +690,7 @@ def get_dividend(order_book_id, start_date, adjusted=True):
 
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
+                                EXECUTION_PHASE.ON_TICK,
                                 EXECUTION_PHASE.SCHEDULED)
 @apply_rules(verify_that('series_name').is_instance_of(str),
              verify_that('value').is_number())
