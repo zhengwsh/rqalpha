@@ -13,7 +13,7 @@ class VNPYMod(AbstractMod):
 
     def start_up(self, env, mod_config):
         self._env = env
-        self._engine = RQVNPYEngine(self._env)
+        self._engine = RQVNPYEngine(env, mod_config)
         self._env.set_broker(VNPYBroker(env, self._engine))
         self._env.set_event_source(VNPYEventSource(env, self._engine))
         # TODO: CTP登录因该放到 before_trading 中好一点

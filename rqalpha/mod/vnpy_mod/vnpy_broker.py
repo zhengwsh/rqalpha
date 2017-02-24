@@ -26,7 +26,7 @@ class VNPYBroker(AbstractBroker):
         self._accounts = None
 
         self._engine = vnpy_engine
-        self._vnpy_gateway_name = self._env.config.mod.vnpy.gateway_name
+        self._vnpy_gateway_type = self._env.config.mod.vnpy.gateway_type
 
         self._account_cache = None
 
@@ -46,10 +46,10 @@ class VNPYBroker(AbstractBroker):
         return self._engine.open_orders
 
     def submit_order(self, order):
-        self._engine.send_order(order, self._vnpy_gateway_name)
+        self._engine.send_order(order, self._vnpy_gateway_type)
 
     def cancel_order(self, order):
-        self._engine.cancel_order(order, self._vnpy_gateway_name)
+        self._engine.cancel_order(order, self._vnpy_gateway_type)
 
     def update(self, calendar_dt, trading_dt, bar_dict):
         pass

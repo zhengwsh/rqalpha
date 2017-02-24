@@ -113,8 +113,8 @@ mod:
     lib: rqalpha.mod.vnpy_mod
     enabled: true
     priority: 200
-    gateway_name: CTP
-    ctp:
+    gateway_type: CTP
+    CTP:
       userID:
       password:
       brokerID:
