@@ -156,6 +156,7 @@ def get_open_orders():
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.BEFORE_TRADING,
                                 EXECUTION_PHASE.ON_BAR,
+                                EXECUTION_PHASE.ON_TICK,
                                 EXECUTION_PHASE.AFTER_TRADING,
                                 EXECUTION_PHASE.SCHEDULED)
 def cancel_order(order):
@@ -311,6 +312,7 @@ def get_yield_curve(date=None, tenor=None):
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.BEFORE_TRADING,
                                 EXECUTION_PHASE.ON_BAR,
+                                EXECUTION_PHASE.ON_TICK,
                                 EXECUTION_PHASE.AFTER_TRADING,
                                 EXECUTION_PHASE.SCHEDULED)
 @apply_rules(verify_that('order_book_id').is_valid_instrument(),
@@ -710,6 +712,7 @@ def plot(series_name, value):
 
 @export_as_api
 @ExecutionContext.enforce_phase(EXECUTION_PHASE.ON_BAR,
+                                EXECUTION_PHASE.ON_TICK,
                                 EXECUTION_PHASE.SCHEDULED)
 @apply_rules(verify_that('id_or_symbol').is_valid_instrument())
 def current_snapshot(id_or_symbol):

@@ -185,7 +185,7 @@ class RQVNPYEngine(object):
             self.subscribe(order_book_id)
 
     def connect(self):
-        self.vnpy_gateway.connect(dict(getattr(self._config, 'CTP')))
+        self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
 
     def send_order(self, order):
         account = self._get_account_for(order)
@@ -261,17 +261,17 @@ class RQVNPYEngine(object):
         self.event_engine.stop()
 
     def _init_gateway(self):
-        gateway_type = self._config.gateway_type
-        if gateway_type == 'CTP':
+        self.gateway_type = self._config.gateway_type
+        if self.gateway_type == 'CTP':
             try:
                 from .vn_trader.ctpGateway.ctpGateway import CtpGateway
-                self.vnpy_gateway = CtpGateway(self.event_engine, 'CTP')
+                self.vnpy_gateway = CtpGateway(self.event_engine, self.gateway_type)
                 self.vnpy_gateway.setQryEnabled(True)
             except ImportError as e:
-                print(e)
+                print("Error: ", e)
                 print('No Gateway named CTP')
         else:
-            print('No Gateway named %s' % gateway_type)
+            print('No Gateway named %s' % self.gateway_type)
 
     def _register_event(self):
         self.event_engine.register(EVENT_ORDER, self.on_order)
