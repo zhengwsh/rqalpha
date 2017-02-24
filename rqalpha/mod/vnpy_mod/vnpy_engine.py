@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dateutil.parser import parse
 from Queue import Queue
+from time import time
 import numpy as np
 
 from rqalpha.const import SIDE, ORDER_TYPE, POSITION_EFFECT
@@ -64,6 +65,7 @@ class RQVNPYEngine(object):
         self._open_order_dict = {}
         self._trade_dict = {}
         self._contract_dict = {}
+        self._account_cache = {}
         self._tick_que = Queue()
 
         self._register_event()
@@ -180,7 +182,6 @@ class RQVNPYEngine(object):
 
     def on_universe_changed(self, universe):
         for order_book_id in universe:
-            # TODO need mapping
             self.subscribe(order_book_id)
 
     def connect(self):
@@ -240,6 +241,20 @@ class RQVNPYEngine(object):
 
     def get_tick(self):
         return self._tick_que.get(block=True)
+
+    def qry_account(self):
+        self.vnpy_gateway.qryAccount()
+        self.vnpy_gateway.qryPosition()
+
+    def wait_until_connected(self, timeout=None):
+        start_time = time()
+        while True:
+            if self.vnpy_gateway.mdConnected and self.vnpy_gateway.tdConnected:
+                break
+            else:
+                if timeout is not None:
+                    if time() - start_time > timeout:
+                        break
 
     def exit(self):
         self.vnpy_gateway.close()

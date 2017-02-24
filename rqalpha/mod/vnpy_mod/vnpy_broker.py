@@ -34,8 +34,7 @@ class VNPYBroker(AbstractBroker):
         self._vnpy_engine.exit()
 
     def before_trading(self):
-        # TODO: CTP 登录放到此处
-        pass
+        self._engine.connect()
 
     def get_accounts(self):
         if self._accounts is None:

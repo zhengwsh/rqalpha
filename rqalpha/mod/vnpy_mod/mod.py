@@ -16,8 +16,9 @@ class VNPYMod(AbstractMod):
         self._engine = RQVNPYEngine(env, mod_config)
         self._env.set_broker(VNPYBroker(env, self._engine))
         self._env.set_event_source(VNPYEventSource(env, self._engine))
-        # TODO: CTP登录因该放到 before_trading 中好一点
         self._engine.connect()
+        self._engine.wait_until_connected(timeout=300)
+        self._engine.qry_account()
 
     def tear_down(self, code, exception=None):
         self._engine.exit()
