@@ -7,6 +7,7 @@ from rqalpha.const import SIDE, ORDER_TYPE, POSITION_EFFECT
 from rqalpha.model.trade import Trade
 from rqalpha.events import EVENT
 from rqalpha.utils import get_account_type
+from rqalpha.utils.logger import system_log
 
 from .vn_trader.eventEngine import EventEngine2
 from .vn_trader.vtGateway import VtOrderReq, VtCancelOrderReq, VtSubscribeReq
@@ -79,7 +80,7 @@ class RQVNPYEngine(object):
         try:
             order = self._order_dict[vnpy_order_id]
         except KeyError:
-            print('No Such order in rqalpha query.')
+            system_log.error('No Such order in rqalpha query. {}', vnpy_order_id)
             return
 
         account = self._get_account_for(order)
@@ -125,7 +126,7 @@ class RQVNPYEngine(object):
 
     def on_tick(self, event):
         vnpy_tick = event.dict_['data']
-        print vnpy_tick.__dict__
+        system_log.debug("vnpy tick {}", vnpy_tick.__dict__)
         tick = {
             'order_book_id': _order_book_id(vnpy_tick.symbol),
             'datetime': parse('%s %s' % (vnpy_tick.date, vnpy_tick.time)),
@@ -176,7 +177,7 @@ class RQVNPYEngine(object):
     def on_log(self, event):
         log = event.dict_['data']
         # TODO: 调用rqalpha logger 模块
-        print(log.logContent)
+        system_log.debug(log.logContent)
 
     def on_universe_changed(self, universe):
         for order_book_id in universe:
@@ -253,10 +254,9 @@ class RQVNPYEngine(object):
                 self.vnpy_gateway = CtpGateway(self.event_engine, self.gateway_type)
                 self.vnpy_gateway.setQryEnabled(True)
             except ImportError as e:
-                print("Error: ", e)
-                print('No Gateway named CTP')
+                system_log.exception("No Gateway named CTP")
         else:
-            print('No Gateway named %s' % self.gateway_type)
+            system_log.error('No Gateway named {}', self.gateway_type)
 
     def _register_event(self):
         self.event_engine.register(EVENT_ORDER, self.on_order)
@@ -271,7 +271,7 @@ class RQVNPYEngine(object):
         try:
             return self._contract_dict[order_book_id]
         except KeyError:
-            print('No such contract whose order_book_id is %s ' % order_book_id)
+            system_log.error('No such contract whose order_book_id is {} ', order_book_id)
 
     def _get_account_for(self, order):
         account_type = get_account_type(order.order_book_id)
