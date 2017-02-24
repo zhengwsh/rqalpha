@@ -1,3 +1,6 @@
+# encoding: UTF-8
+import six
+
 from rqalpha.utils import json as json_utils
 
 # TODO: 实现以下三个类

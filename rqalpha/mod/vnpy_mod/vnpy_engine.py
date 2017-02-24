@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from dateutil.parser import parse
 from Queue import Queue
+from Queue import Empty
 from time import time
 import numpy as np
 
@@ -284,7 +285,11 @@ class RQVNPYEngine(object):
         self.vnpy_gateway.subscribe(subscribe_req)
 
     def get_tick(self):
-        return self._tick_que.get(block=True)
+        while True:
+            try:
+                return self._tick_que.get(timeout=1)
+            except Empty:
+                continue
 
     def qry_account(self):
         self.vnpy_gateway.qryAccount()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta, datetime
 
+from rqalpha.utils.logger import system_log
 from rqalpha.interface import AbstractEventSource
 from rqalpha.events import Event, EVENT
 from rqalpha.utils import RqAttrDict
@@ -22,10 +23,12 @@ class VNPYEventSource(AbstractEventSource):
             # TODO: 明确 before_trading 逻辑
             if before_trading_flag:
                 before_trading_flag = False
+                system_log.debug("VNPYEventSource: before trading event")
                 yield Event(EVENT.BEFORE_TRADING, datetime.now(), datetime.now())
                 continue
 
             tick = self._engine.get_tick()
+            system_log.debug("VNPYEventSource: tick {}", tick.__dict__)
 
             calendar_dt = tick['datetime']
             # if calendar_dt > end_date:
