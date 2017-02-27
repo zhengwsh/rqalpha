@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from rqalpha.interface import AbstractMod
+from rqalpha.events import EVENT
 
 from .vnpy_engine import RQVNPYEngine
 from .vnpy_event_source import VNPYEventSource
@@ -17,8 +18,6 @@ class VNPYMod(AbstractMod):
         self._env.set_broker(VNPYBroker(env, self._engine))
         self._env.set_event_source(VNPYEventSource(env, self._engine))
         self._engine.connect()
-        self._engine.wait_until_connected(timeout=300)
-        self._engine.qry_account()
 
     def tear_down(self, code, exception=None):
         self._engine.exit()

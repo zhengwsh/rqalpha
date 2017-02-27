@@ -1,54 +1,28 @@
 # -*- coding: utf-8 -*-
+from datetime import datetime
 from dateutil.parser import parse
 from Queue import Queue
 from Queue import Empty
-from time import time
+from time import time, sleep
 import numpy as np
 
-from rqalpha.const import SIDE, ORDER_TYPE, POSITION_EFFECT
 from rqalpha.model.trade import Trade
 from rqalpha.model.order import Order, LimitOrder
 from rqalpha.events import EVENT
 from rqalpha.utils import get_account_type
 from rqalpha.utils.logger import system_log
+from rqalpha.const import ACCOUNT_TYPE
 
 from .vn_trader.eventEngine import EventEngine2
 from .vn_trader.vtGateway import VtOrderReq, VtCancelOrderReq, VtSubscribeReq
 from .vn_trader.eventType import EVENT_CONTRACT, EVENT_ORDER, EVENT_TRADE, EVENT_TICK, EVENT_LOG
-from .vn_trader.vtConstant import DIRECTION_LONG, DIRECTION_SHORT
-from .vn_trader.vtConstant import PRICETYPE_LIMITPRICE, PRICETYPE_MARKETPRICE
-from .vn_trader.vtConstant import OFFSET_CLOSE, OFFSET_OPEN
 from .vn_trader.vtConstant import STATUS_NOTTRADED, STATUS_PARTTRADED, STATUS_ALLTRADED, STATUS_CANCELLED
 
 from .vn_trader.vtConstant import CURRENCY_CNY
 from .vn_trader.vtConstant import PRODUCT_FUTURES
 
 from .account_cache import AccountCache
-
-SIDE_MAPPING = {
-    SIDE.BUY: DIRECTION_LONG,
-    SIDE.SELL: DIRECTION_SHORT
-}
-
-SIDE_REVERSE = {
-    DIRECTION_LONG: SIDE.BUY,
-    DIRECTION_SHORT: SIDE.SELL,
-}
-
-ORDER_TYPE_MAPPING = {
-    ORDER_TYPE.MARKET: PRICETYPE_MARKETPRICE,
-    ORDER_TYPE.LIMIT: PRICETYPE_LIMITPRICE
-}
-
-POSITION_EFFECT_MAPPING = {
-    POSITION_EFFECT.OPEN: OFFSET_OPEN,
-    POSITION_EFFECT.CLOSE: OFFSET_CLOSE,
-}
-
-POSITION_EFFECT_REVERSE = {
-    OFFSET_OPEN: POSITION_EFFECT.OPEN,
-    OFFSET_CLOSE: POSITION_EFFECT.CLOSE,
-}
+from .utils import SIDE_MAPPING, SIDE_REVERSE, ORDER_TYPE_MAPPING, POSITION_EFFECT_MAPPING, POSITION_EFFECT_REVERSE
 
 _engine = None
 
@@ -84,8 +58,7 @@ class RQVNPYEngine(object):
 
         self.gateway_type = None
         self.vnpy_gateway = None
-        # TODO: 记录账户初始化时间
-        self.init_account_timestamp = None
+        self.init_account_time = None
 
         self._init_gateway()
 
@@ -107,6 +80,10 @@ class RQVNPYEngine(object):
         vnpy_order = event.dict_['data']
         system_log.debug("on_order {}", vnpy_order.__dict__)
         vnpy_order_id = vnpy_order.vtOrderID
+
+        if self.init_account_time is None:
+            self._account_cache.insert_hist_order(vnpy_order)
+            return
 
         try:
             order = self._order_dict[vnpy_order_id]
@@ -134,14 +111,17 @@ class RQVNPYEngine(object):
     def on_trade(self, event):
         vnpy_trade = event.dict_['data']
         system_log.debug("on_trade {}", vnpy_trade.__dict__)
+
+        if self.init_account_time is None:
+            self._account_cache.insert_hist_trade(vnpy_trade)
+
         try:
             order = self._order_dict[vnpy_trade.vtOrderID]
         except KeyError:
-            if vnpy_trade.tradeTime > self.init_account_timestamp:
+            if vnpy_trade.tradeTime > self.init_account_time:
                 order = create_order_from_trade(vnpy_trade)
             else:
                 return
-
         account = self._get_account_for(order)
         ct_amount = account.portfolio.positions[order.order_book_id]._cal_close_today_amount(vnpy_trade.volume,
                                                                                              order.side)
@@ -227,7 +207,6 @@ class RQVNPYEngine(object):
 
     def on_log(self, event):
         log = event.dict_['data']
-        # TODO: 调用rqalpha logger 模块
         system_log.debug(log.logContent)
 
     def on_universe_changed(self, universe):
@@ -236,6 +215,19 @@ class RQVNPYEngine(object):
 
     def connect(self):
         self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
+        if self.init_account_time is not None:
+            return
+        '''
+        self.wait_until_connected(timeout=300)
+        self.vnpy_gateway.qryAccount()
+        self.vnpy_gateway.qryPosition()
+        # FIXME: hardcode
+        sleep(1)
+        account_json = self._account_cache.get_state()
+        self._env.broker.init_account(account_json)
+        '''
+        self._env.broker.init_account(None)
+        self.init_account_time = datetime.now()
 
     def send_order(self, order):
         account = self._get_account_for(order)
@@ -257,7 +249,7 @@ class RQVNPYEngine(object):
         order_req.volume = order.quantity
         order_req.direction = SIDE_MAPPING[order.side]
         order_req.priceType = ORDER_TYPE_MAPPING[order.type]
-        order_req.offset = POSITION_EFFECT[order.position_effect]
+        order_req.offset = POSITION_EFFECT_MAPPING[order.position_effect]
         order_req.currency = CURRENCY_CNY
         order_req.productClass = PRODUCT_FUTURES
 
@@ -296,13 +288,6 @@ class RQVNPYEngine(object):
             except Empty:
                 system_log.debug("get tick timeout")
                 continue
-
-    def qry_account(self):
-        self.vnpy_gateway.qryAccount()
-        self.vnpy_gateway.qryPosition()
-
-    def get_account_json(self):
-        return self._account_cache.get_state()
 
     def wait_until_connected(self, timeout=None):
         start_time = time()
@@ -346,5 +331,6 @@ class RQVNPYEngine(object):
             system_log.error('No such contract whose order_book_id is {} ', order_book_id)
 
     def _get_account_for(self, order):
-        account_type = get_account_type(order.order_book_id)
+        # FIXME: hardcode
+        account_type = ACCOUNT_TYPE.FUTURE
         return self._env.broker.get_account()[account_type]
