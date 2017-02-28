@@ -27,7 +27,7 @@ class VNPYEventSource(AbstractEventSource):
         self._time_period = None
 
     def mark_time_period(self, start_date, end_date):
-        trading_days = get_trading_dates(start_date, end_date)
+        trading_days = self._env.data_proxy.get_trading_dates(start_date, end_date)
 
         def in_before_trading_time(time):
             return time.hour == 20 and time.minute < 55
@@ -75,39 +75,45 @@ class VNPYEventSource(AbstractEventSource):
         while datetime.now().date() < start_date:
             continue
 
-        mark_time_thread = Thread(target=self.mark_time_period, args=(start_date, end_date))
+        mark_time_thread = Thread(target=self.mark_time_period, args=(start_date, date.fromtimestamp(2147483647)))
         mark_time_thread.setDaemon(True)
         mark_time_thread.start()
 
         while True:
-            # if calendar_dt > end_date:
-            #     break
-            if self._time_period == TimePeriod.BEFORE_TRADING and not self._before_trading_processed:
-                system_log.debug("VNPYEventSource: before trading event")
-                yield Event(EVENT.BEFORE_TRADING, datetime.now(), datetime.now() + timedelta(days=1))
-                self._before_trading_processed = True
-                continue
-            if self._time_period == TimePeriod.AFTER_TRADING and not self._after_trading_processed:
-                system_log.debug("VNPYEventSource: after trading event")
-                yield Event(EVENT.AFTER_TRADING, datetime.now(), datetime.now())
-                self._after_trading_processed = True
-                continue
-            if self._time_period == TimePeriod.TRADING:
-                if self._before_trading_processed:
-                    self._before_trading_processed = False
+            if self._time_period == TimePeriod.BEFORE_TRADING:
                 if self._after_trading_processed:
                     self._after_trading_processed = False
-                tick = self._engine.get_tick()
-                system_log.debug("VNPYEventSource: tick {}", tick)
-
-                calendar_dt = tick['datetime']
-
-                if calendar_dt.hour > 20:
-                    trading_dt = calendar_dt + timedelta(days=1)
+                if not self._before_trading_processed:
+                    system_log.debug("VNPYEventSource: before trading event")
+                    yield Event(EVENT.BEFORE_TRADING, datetime.now(), datetime.now() + timedelta(days=1))
+                    self._before_trading_processed = True
+                    continue
                 else:
-                    trading_dt = calendar_dt
-
-                yield Event(EVENT.TICK, calendar_dt, trading_dt, {"tick": RqAttrDict(tick)})
+                    continue
+            elif self._time_period == TimePeriod.TRADING:
+                if not self._before_trading_processed:
+                    system_log.debug("VNPYEventSource: before trading event")
+                    yield Event(EVENT.BEFORE_TRADING, datetime.now(), datetime.now() + timedelta(days=1))
+                    self._before_trading_processed = True
+                    continue
+                else:
+                    tick = self._engine.get_tick()
+                    calendar_dt = tick['datetime']
+                    if calendar_dt.hour > 20:
+                        trading_dt = calendar_dt + timedelta(days=1)
+                    else:
+                        trading_dt = calendar_dt
+                    system_log.debug("VNPYEventSource: tick {}", tick)
+                    yield Event(EVENT.TICK, calendar_dt, trading_dt, {"tick": RqAttrDict(tick)})
+            elif self._time_period == TimePeriod.AFTER_TRADING:
+                if self._before_trading_processed:
+                    self._before_trading_processed = False
+                if not self._after_trading_processed:
+                    system_log.debug("VNPYEventSource: after trading event")
+                    yield Event(EVENT.AFTER_TRADING, datetime.now(), datetime.now())
+                    self._after_trading_processed = True
+                else:
+                    continue
 
 
 if __name__ == '__main__':
