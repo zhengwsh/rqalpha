@@ -25,6 +25,11 @@ class Localization(object):
         self.trans = NullTranslations() if trans is None else trans
 
     def set_locale(self, locales, trans_dir=None):
+        if locales[0] is None or "en" in locales[0].lower():
+            self.trans = NullTranslations()
+            return
+        if "cn" in locales[0].lower():
+            locales = ["zh_Hans_CN"]
         try:
             if trans_dir is None:
                 trans_dir = os.path.join(
@@ -49,4 +54,8 @@ localization = Localization()
 
 
 def gettext(message):
-    return localization.trans.gettext(message)
+    trans_txt = localization.trans.gettext(message)
+    try:
+        return trans_txt.decode('utf-8')
+    except AttributeError:
+        return trans_txt

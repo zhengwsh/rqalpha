@@ -22,15 +22,13 @@ try:
 except Exception as e:
     from fastcache import lru_cache
 
-from ..utils import cache_control
-
 
 class DateSet(object):
     def __init__(self, f):
         self._dates = bcolz.open(f, 'r')
         self._index = self._dates.attrs['line_map']
 
-    @lru_cache(cache_control.get_entry_count(None))
+    @lru_cache(None)
     def _get_set(self, s, e):
         return set(self._dates[s:e])
 

@@ -4,6 +4,23 @@
 History
 ==================
 
+0.3.11
+==================
+
+- 更新本地化翻译，修改系统提示，支持多语言
+- 增加 :code:`--locale` 默认为 :code:`cn` (中文), 支持 :code:`cn | en` (中文 | 英文)
+- 修复 :code:`main.run` 返回值中 :code:`stock_position` 为 :code:`None` 的问题
+- 修复 Windows Python 2.7 下中文显示乱码的问题
+
+0.3.10
+==================
+
+- 增加 :code:`config.yml` 的版本号检查及相关流程
+- 增加 :code:`plot` 关于中文字体的校验，如果系统没有中文字体，则显示英文字段
+- 修正 :code:`Benchmark` 在不设置时某些情况下会导致运行失败的错误
+- 修正 :code:`inspect.unwrap` 在 Python 2.7 下不支持的兼容性问题
+- 修正 :code:`numpy` 在某些平台下没有 `float128` 引起的报错问题
+
 0.3.9
 ==================
 

@@ -36,27 +36,8 @@ del pkgutil
 
 
 def run(config, source_code=None):
-    import locale
-    import os
-    from .utils.cache_control import set_cache_policy, CachePolicy
-    from .utils.i18n import localization
     from .utils.config import parse_config
     from . import main
-
-    try:
-        if config["base"]["run_type"] == "p":
-            set_cache_policy(CachePolicy.MINIMUM)
-    except Exception as e:
-        pass
-
-    try:
-        locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
-        locale.setlocale(locale.LC_CTYPE, "en_US.UTF-8")
-        os.environ['TZ'] = 'Asia/Shanghai'
-        localization.set_locale(["zh_Hans_CN"])
-    except Exception as e:
-        if os.name != 'nt':
-            raise
 
     return main.run(parse_config(config, click_type=False, source_code=source_code), source_code=source_code)
 
