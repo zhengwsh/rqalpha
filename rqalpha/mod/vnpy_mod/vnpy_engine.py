@@ -307,8 +307,8 @@ class RQVNPYEngine(object):
         self.gateway_type = self._config.gateway_type
         if self.gateway_type == 'CTP':
             try:
-                from .vn_trader.ctpGateway.ctpGateway import CtpGateway
-                self.vnpy_gateway = CtpGateway(self.event_engine, self.gateway_type)
+                from .vnpy_gateway import RQVNCTPGateway
+                self.vnpy_gateway = RQVNCTPGateway(self.event_engine, self.gateway_type)
                 self.vnpy_gateway.setQryEnabled(True)
             except ImportError as e:
                 system_log.exception("No Gateway named CTP")
