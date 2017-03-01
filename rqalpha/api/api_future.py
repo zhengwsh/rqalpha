@@ -62,9 +62,7 @@ def order(id_or_ins, amount, side, position_effect, style):
         raise patch_user_exc(ValueError(_("Limit order price should be positive")))
 
     order_book_id = assure_future_order_book_id(id_or_ins)
-    bar_dict = ExecutionContext.get_current_bar_dict()
-    bar = bar_dict[order_book_id]
-    price = bar.close
+    price = ExecutionContext.get_currnet_close_price(order_book_id)
 
     amount = int(amount)
 
