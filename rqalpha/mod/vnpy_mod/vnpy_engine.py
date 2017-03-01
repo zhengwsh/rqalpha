@@ -68,6 +68,8 @@ class RQVNPYEngine(object):
         self._trade_dict = {}
         self._contract_dict = {}
         self._account_cache = AccountCache()
+        self._tick_snapshot_cache = {}
+
         self._tick_que = Queue()
 
         self._register_event()
@@ -147,8 +149,9 @@ class RQVNPYEngine(object):
     def on_tick(self, event):
         vnpy_tick = event.dict_['data']
         system_log.debug("vnpy tick {}", vnpy_tick.__dict__)
+        order_book_id = _order_book_id(vnpy_tick.symbol)
         tick = {
-            'order_book_id': _order_book_id(vnpy_tick.symbol),
+            'order_book_id': order_book_id,
             'datetime': parse('%s %s' % (vnpy_tick.date, vnpy_tick.time)),
             'open': vnpy_tick.openPrice,
             'last': vnpy_tick.lastPrice,
@@ -193,6 +196,7 @@ class RQVNPYEngine(object):
             'limit_down': vnpy_tick.lowerLimit,
         }
         self._tick_que.put(tick)
+        self._tick_snapshot_cache[order_book_id] = tick
 
     def on_positions(self, event):
         vnpy_position = event.dict_['data']
@@ -210,6 +214,7 @@ class RQVNPYEngine(object):
         system_log.debug(log.logContent)
 
     def on_universe_changed(self, universe):
+        self.wait_until_contract_updated(timeout=10)
         for order_book_id in universe:
             self.subscribe(order_book_id)
 
@@ -289,10 +294,23 @@ class RQVNPYEngine(object):
                 system_log.debug("get tick timeout")
                 continue
 
+    def get_tick_snapshot(self, order_book_id):
+        return self._tick_snapshot_cache.get(order_book_id)
+
     def wait_until_connected(self, timeout=None):
         start_time = time()
         while True:
             if self.vnpy_gateway.mdConnected and self.vnpy_gateway.tdConnected:
+                break
+            else:
+                if timeout is not None:
+                    if time() - start_time > timeout:
+                        break
+
+    def wait_until_contract_updated(self, timeout=None):
+        start_time = time()
+        while True:
+            if self.vnpy_gateway.contract_update_complete:
                 break
             else:
                 if timeout is not None:

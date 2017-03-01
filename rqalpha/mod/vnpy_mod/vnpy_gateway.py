@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from .vn_trader.ctpGateway.ctpGateway import CtpGateway
-from .vn_trader.ctpGateway.vnctptd import TdApi
 from .vn_trader.ctpGateway.ctpGateway import CtpTdApi, CtpMdApi
 
 
@@ -13,6 +12,11 @@ class RQCTPTdApi(CtpTdApi):
         # TODO: 明确字段，缓存数据
         print(data)
         print(last)
+
+    def onRspQryInstrument(self, data, error, n, last):
+        super(RQCTPTdApi, self).onRspQryInstrument(data, error, n, last)
+        if last:
+            self.gateway.on_contract_update_complete()
 
     def qry_position_detail(self):
         self.reqID += 1
@@ -39,6 +43,10 @@ class RQVNCTPGateway(CtpGateway):
         self.tdConnected = False
 
         self.qryEnabled = False
+        self.contract_update_complete = False
 
     def qry_position_detail(self):
         self.tdApi.qry_position_detail()
+
+    def on_contract_update_complete(self):
+        self.contract_update_complete = True
