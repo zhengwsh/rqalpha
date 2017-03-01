@@ -5,6 +5,7 @@ from rqalpha.events import EVENT
 from .vnpy_engine import RQVNPYEngine
 from .vnpy_event_source import VNPYEventSource
 from .vnpy_broker import VNPYBroker
+from .vnpy_data_source import VNPYDataSource
 
 
 class VNPYMod(AbstractMod):
@@ -17,6 +18,7 @@ class VNPYMod(AbstractMod):
         self._engine = RQVNPYEngine(env, mod_config)
         self._env.set_broker(VNPYBroker(env, self._engine))
         self._env.set_event_source(VNPYEventSource(env, self._engine))
+        self._env.set_data_source(VNPYDataSource(env, self._engine))
         self._engine.connect()
 
     def tear_down(self, code, exception=None):
