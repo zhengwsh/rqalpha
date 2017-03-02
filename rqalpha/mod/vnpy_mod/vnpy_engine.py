@@ -6,12 +6,10 @@ from Queue import Empty
 from time import time, sleep
 import numpy as np
 
-from rqalpha.model.trade import Trade
-from rqalpha.model.order import Order, LimitOrder
 from rqalpha.events import EVENT
 from rqalpha.utils import get_account_type
 from rqalpha.utils.logger import system_log
-from rqalpha.const import ACCOUNT_TYPE
+from rqalpha.const import ACCOUNT_TYPE, ORDER_STATUS
 
 from .vn_trader.eventEngine import EventEngine2
 from .vn_trader.vtGateway import VtOrderReq, VtCancelOrderReq, VtSubscribeReq
@@ -21,8 +19,8 @@ from .vn_trader.vtConstant import STATUS_NOTTRADED, STATUS_PARTTRADED, STATUS_AL
 from .vn_trader.vtConstant import CURRENCY_CNY
 from .vn_trader.vtConstant import PRODUCT_FUTURES
 
-from .account_cache import AccountCache
-from .utils import SIDE_MAPPING, SIDE_REVERSE, ORDER_TYPE_MAPPING, POSITION_EFFECT_MAPPING, POSITION_EFFECT_REVERSE
+from .data_factory import RQVNOrder, RQVNTrade, RQVNCount
+from .utils import SIDE_MAPPING, ORDER_TYPE_MAPPING, POSITION_EFFECT_MAPPING
 
 _engine = None
 
@@ -37,18 +35,6 @@ def _order_book_id(symbol):
     return order_book_id.upper()
 
 
-def create_order_from_trade(vnpy_trade):
-    return Order.__from_create__(
-        calendar_dt=vnpy_trade.tradeTime,
-        trading_dt=vnpy_trade.tradeTime,
-        order_book_id=_order_book_id(vnpy_trade.symbol),
-        quantity=vnpy_trade.volume,
-        side=SIDE_REVERSE[vnpy_trade.direction],
-        style=LimitOrder(vnpy_trade.price),
-        position_effect=POSITION_EFFECT_REVERSE[vnpy_trade.offset]
-    )
-
-
 class RQVNPYEngine(object):
     def __init__(self, env, config):
         self._env = env
@@ -56,95 +42,154 @@ class RQVNPYEngine(object):
         self.event_engine = EventEngine2()
         self.event_engine.start()
 
+        self.accounts = {ACCOUNT_TYPE.FUTURE: RQVNCount(env, config.base.start_date)}
+
         self.gateway_type = None
         self.vnpy_gateway = None
         self.init_account_time = None
+        self.account_inited = None
 
         self._init_gateway()
-
-        self._order_dict = {}
-        self._vnpy_order_dict = {}
-        self._open_order_dict = {}
-        self._trade_dict = {}
-        self._contract_dict = {}
-        self._account_cache = AccountCache()
-        self._tick_snapshot_cache = {}
+        self._data_cache = DataCache()
 
         self._tick_que = Queue()
 
         self._register_event()
 
-    @property
-    def open_orders(self):
-        return list(self._open_order_dict.values())
+    # ------------------------------------ order生命周期 ------------------------------------
+    def send_order(self, order):
+        account = self._get_account_for(order.order_book_id)
+        self._env.event_bus.publish_event(EVENT.ORDER_PENDING_NEW, account, order)
+
+        contract = self._data_cache.get_contract(order.order_book_id)
+
+        if contract is None:
+            self._env.event_bus.publish_event(EVENT.ORDER_PENDING_CANCEL)
+            order._mark_cancelled('No contract exists whose order_book_id is %s' % order.order_book_id)
+            self._env.event_bus.publish_event(EVENT.ORDER_CANCELLATION_PASS)
+
+        if order._is_final():
+            return
+
+        order_req = VtOrderReq()
+        order_req.symbol = contract.symbol
+        order_req.exchange = contract.exchange
+        order_req.price = order.price
+        order_req.volume = order.quantity
+        order_req.direction = SIDE_MAPPING[order.side]
+        order_req.priceType = ORDER_TYPE_MAPPING[order.type]
+        order_req.offset = POSITION_EFFECT_MAPPING[order.position_effect]
+        order_req.currency = CURRENCY_CNY
+        order_req.productClass = PRODUCT_FUTURES
+
+        vnpy_order_id = self.vnpy_gateway.sendOrder(order_req)
+        self._data_cache.put_order(vnpy_order_id, order)
+
+    def cancel_order(self, order):
+        account = self._get_account_for(order.order_book_id)
+        self._env.event_bus.publish_event(EVENT.ORDER_PENDING_CANCEL, account, order)
+
+        vnpy_order = self._data_cache.get_vnpy_order(order.order_id)
+
+        cancel_order_req = VtCancelOrderReq()
+        cancel_order_req.symbol = vnpy_order.symbol
+        cancel_order_req.exchange = vnpy_order.exchange
+        cancel_order_req.sessionID = vnpy_order.sessionID
+        cancel_order_req.orderID = vnpy_order.orderID
+        self.vnpy_gateway.cancelOrder(cancel_order_req)
 
     def on_order(self, event):
         vnpy_order = event.dict_['data']
         system_log.debug("on_order {}", vnpy_order.__dict__)
         vnpy_order_id = vnpy_order.vtOrderID
+        order = self._data_cache.get_order(vnpy_order_id)
 
-        if self.init_account_time is None:
-            self._account_cache.insert_hist_order(vnpy_order)
-            return
+        if order is not None:
+            account = self._get_account_for(order.order_book_id)
 
-        try:
-            order = self._order_dict[vnpy_order_id]
-        except KeyError:
-            system_log.error('No Such order in rqalpha query. {}', vnpy_order_id)
-            return
+            order._activate()
 
-        account = self._get_account_for(order)
+            self._env.event_bus.publish_event(EVENT.ORDER_CREATION_PASS, account, order)
 
-        order._activate()
+            self._data_cache.put_vnpy_order(order.order_id, vnpy_order)
+            if vnpy_order.status == STATUS_NOTTRADED or vnpy_order.status == STATUS_PARTTRADED:
+                self._data_cache.put_open_order(vnpy_order_id, order)
+            elif vnpy_order.status == STATUS_ALLTRADED:
+                self._data_cache.del_open_order(vnpy_order_id)
+            elif vnpy_order.status == STATUS_CANCELLED:
+                self._data_cache.del_open_order(vnpy_order_id)
+                if order.status == ORDER_STATUS.PENDING_CANCEL:
+                    order._mark_cancelled("%d order has been cancelled by user." % order.order_id)
+                    self._env.event_bus.publish_event(EVENT.ORDER_CANCELLATION_PASS, account, order)
+                else:
+                    order._mark_rejected('Order was rejected or cancelled by vnpy.')
+                    self._env.event_bus.publish_event(EVENT.ORDER_UNSOLICITED_UPDATE, account, order)
+        else:
+            contract = self._data_cache.get_contract(_order_book_id(vnpy_order.symbol))
+            order = RQVNOrder(vnpy_order, contract)
+            account = self._get_account_for(order.order_book_id)
+            if not account.inited:
+                account.put_hist_order(order)
+            else:
+                system_log.error('Order from VNPY dose not match that in rqalpha')
 
-        self._env.event_bus.publish_event(EVENT.ORDER_CREATION_PASS, account, order)
+    @property
+    def open_orders(self):
+        return self._data_cache.open_orders
 
-        self._vnpy_order_dict[order.order_id] = vnpy_order
-        if vnpy_order.status == STATUS_NOTTRADED or vnpy_order.status == STATUS_PARTTRADED:
-            self._open_order_dict[vnpy_order_id] = order
-        elif vnpy_order.status == STATUS_ALLTRADED:
-            if vnpy_order_id in self._open_order_dict:
-                del self._open_order_dict[vnpy_order_id]
-        elif vnpy_order.status == STATUS_CANCELLED:
-            if vnpy_order_id in self._open_order_dict:
-                del self._open_order_dict[vnpy_order_id]
-            order._mark_rejected('Order was rejected or cancelled by vnpy.')
-
+    # ------------------------------------ trade生命周期 ------------------------------------
     def on_trade(self, event):
         vnpy_trade = event.dict_['data']
         system_log.debug("on_trade {}", vnpy_trade.__dict__)
+        order = self._data_cache.get_order(vnpy_trade.vtOrderID)
+        if order is None:
+            contract = self._data_cache.get_contract(_order_book_id(vnpy_trade.symbol))
+            order = RQVNOrder.create_from_vnpy_trade__(vnpy_trade, contract)
+        account = self._get_account_for(order.order_book_id)
+        trade = RQVNTrade(vnpy_trade, order)
+        if not account.inited:
+            account.put_hist_trade(trade)
+        else:
+            # TODO: 以下三行是否需要在 mod 中实现？
+            # trade._commission = account.commission_decider.get_commission(trade)
+            # trade._tax = account.tax_decider.get_tax(trade)
+            # order._fill(trade)
+            self._env.event_bus.publish_event(EVENT.TRADE, account, trade)
 
-        if self.init_account_time is None:
-            self._account_cache.insert_hist_trade(vnpy_trade)
-
-        try:
-            order = self._order_dict[vnpy_trade.vtOrderID]
-        except KeyError:
-            if vnpy_trade.tradeTime > self.init_account_time:
-                order = create_order_from_trade(vnpy_trade)
-            else:
-                return
-        account = self._get_account_for(order)
-        ct_amount = account.portfolio.positions[order.order_book_id]._cal_close_today_amount(vnpy_trade.volume,
-                                                                                             order.side)
-        trade = Trade.__from_create__(
-            order=order,
-            calendar_dt=order.datetime,
-            trading_dt=vnpy_trade.tradeTime,
-            price=vnpy_trade.price,
-            amount=vnpy_trade.volume,
-            close_today_amount=ct_amount
-        )
-        trade._commission = account.commission_decider.get_commission(trade)
-        trade._tax = account.tax_decider.get_tax(trade)
-        order._fill(trade)
-        self._env.event_bus.publish_event(EVENT.TRADE, account, trade)
-
+    # ------------------------------------ instrument生命周期 ------------------------------------
     def on_contract(self, event):
         contract = event.dict_['data']
         system_log.debug("on_contract {}", contract.__dict__)
-        order_book_id = _order_book_id(contract.symbol)
-        self._contract_dict[order_book_id] = contract
+        self._data_cache.put_contract(contract)
+
+    def wait_until_contract_updated(self, timeout=None):
+        start_time = time()
+        while True:
+            if self.vnpy_gateway.contract_update_complete:
+                break
+            else:
+                if timeout is not None:
+                    if time() - start_time > timeout:
+                        break
+
+    # ------------------------------------ tick生命周期 ------------------------------------
+    def on_universe_changed(self, universe):
+        self.wait_until_contract_updated(timeout=10)
+        for order_book_id in universe:
+            self.subscribe(order_book_id)
+
+    def subscribe(self, order_book_id):
+        contract = self._data_cache.get_contract(order_book_id)
+        if contract is None:
+            system_log.error('Cannot find contract whose order_book_id is %s' % order_book_id)
+            return
+        subscribe_req = VtSubscribeReq()
+        subscribe_req.symbol = contract.symbol
+        subscribe_req.exchange = contract.exchange
+        # hard code
+        subscribe_req.productClass = PRODUCT_FUTURES
+        subscribe_req.currency = CURRENCY_CNY
+        self.vnpy_gateway.subscribe(subscribe_req)
 
     def on_tick(self, event):
         vnpy_tick = event.dict_['data']
@@ -196,95 +241,7 @@ class RQVNPYEngine(object):
             'limit_down': vnpy_tick.lowerLimit,
         }
         self._tick_que.put(tick)
-        self._tick_snapshot_cache[order_book_id] = tick
-
-    def on_positions(self, event):
-        vnpy_position = event.dict_['data']
-        system_log.debug("on_positions {}", vnpy_position.__dict__)
-        order_book_id = _order_book_id(vnpy_position.symbol)
-        self._account_cache.update(order_book_id, vnpy_position)
-
-    def on_account(self, event):
-        vnpy_account = event.dict_['data']
-        system_log.debug("on_account {}", vnpy_account.__dict__)
-        self._account_cache.update_portfolio(vnpy_account)
-
-    def on_log(self, event):
-        log = event.dict_['data']
-        system_log.debug(log.logContent)
-
-    def on_universe_changed(self, universe):
-        self.wait_until_contract_updated(timeout=10)
-        for order_book_id in universe:
-            self.subscribe(order_book_id)
-
-    def connect(self):
-        self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
-        if self.init_account_time is not None:
-            return
-        '''
-        self.wait_until_connected(timeout=300)
-        self.vnpy_gateway.qryAccount()
-        self.vnpy_gateway.qryPosition()
-        # FIXME: hardcode
-        sleep(1)
-        account_json = self._account_cache.get_state()
-        self._env.broker.init_account(account_json)
-        '''
-        self._env.broker.init_account(None)
-        self.init_account_time = datetime.now()
-
-    def send_order(self, order):
-        account = self._get_account_for(order)
-        self._env.event_bus.publish_event(EVENT.ORDER_PENDING_NEW, account, order)
-
-        account.append_order(order)
-
-        contract = self._get_contract_from_order_book_id(order.order_book_id)
-        if contract is None:
-            order._mark_cancelled('No contract exists whose order_book_id is %s' % order.order_book_id)
-
-        if order._is_final():
-            return
-
-        order_req = VtOrderReq()
-        order_req.symbol = contract.symbol
-        order_req.exchange = contract.exchange
-        order_req.price = order.price
-        order_req.volume = order.quantity
-        order_req.direction = SIDE_MAPPING[order.side]
-        order_req.priceType = ORDER_TYPE_MAPPING[order.type]
-        order_req.offset = POSITION_EFFECT_MAPPING[order.position_effect]
-        order_req.currency = CURRENCY_CNY
-        order_req.productClass = PRODUCT_FUTURES
-
-        vnpy_order_id = self.vnpy_gateway.sendOrder(order_req)
-        self._order_dict[vnpy_order_id] = order
-
-    def cancel_order(self, order):
-        account = self._get_account_for(order)
-        self._env.event_bus.publish_event(EVENT.ORDER_PENDING_CANCEL, account, order)
-
-        vnpy_order = self._vnpy_order_dict[order.order_id]
-
-        cancel_order_req = VtCancelOrderReq()
-        cancel_order_req.symbol = vnpy_order.symbol
-        cancel_order_req.exchange = vnpy_order.exchange
-        cancel_order_req.sessionID = vnpy_order.sessionID
-        cancel_order_req.orderID = vnpy_order.orderID
-
-        self.vnpy_gateway.cancelOrder(cancel_order_req)
-
-    def subscribe(self, order_book_id):
-        contract = self._get_contract_from_order_book_id(order_book_id)
-        if contract is None:
-            return
-        subscribe_req = VtSubscribeReq()
-        subscribe_req.symbol = contract.symbol
-        subscribe_req.exchange = contract.exchange
-        subscribe_req.productClass = PRODUCT_FUTURES
-        subscribe_req.currency = CURRENCY_CNY
-        self.vnpy_gateway.subscribe(subscribe_req)
+        self._data_cache.put_tick_snapshot(tick)
 
     def get_tick(self):
         while True:
@@ -295,32 +252,32 @@ class RQVNPYEngine(object):
                 continue
 
     def get_tick_snapshot(self, order_book_id):
-        return self._tick_snapshot_cache.get(order_book_id)
+        return self._data_cache.get_tick_snapshot(order_book_id)
 
-    def wait_until_connected(self, timeout=None):
-        start_time = time()
-        while True:
-            if self.vnpy_gateway.mdConnected and self.vnpy_gateway.tdConnected:
-                break
-            else:
-                if timeout is not None:
-                    if time() - start_time > timeout:
-                        break
+    # ------------------------------------ account生命周期 ------------------------------------
+    def init_account(self):
+        for account in self.accounts:
+            if account.inited:
+                continue
+            account.init()
 
-    def wait_until_contract_updated(self, timeout=None):
-        start_time = time()
-        while True:
-            if self.vnpy_gateway.contract_update_complete:
-                break
-            else:
-                if timeout is not None:
-                    if time() - start_time > timeout:
-                        break
+    def on_positions(self, event):
+        vnpy_position = event.dict_['data']
+        system_log.debug("on_positions {}", vnpy_position.__dict__)
+        order_book_id = _order_book_id(vnpy_position.symbol)
+        account = self._get_account_for(order_book_id)
+        if not account.inited:
+            account.put_vnpy_position(vnpy_position)
 
-    def exit(self):
-        self.vnpy_gateway.close()
-        self.event_engine.stop()
+    def on_account(self, event):
+        vnpy_account = event.dict_['data']
+        system_log.debug("on_account {}", vnpy_account.__dict__)
+        # hardcode
+        account = self.accounts[ACCOUNT_TYPE.FUTURE]
+        if not account.inited:
+            account.put_vnpy_account(vnpy_account)
 
+    # ------------------------------------ gateway 和 event engine生命周期 ------------------------------------
     def _init_gateway(self):
         self.gateway_type = self._config.gateway_type
         if self.gateway_type == 'CTP':
@@ -333,6 +290,16 @@ class RQVNPYEngine(object):
         else:
             system_log.error('No Gateway named {}', self.gateway_type)
 
+    def connect(self):
+        self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
+        # hard code
+        sleep(2)
+        self.init_account()
+
+    def exit(self):
+        self.vnpy_gateway.close()
+        self.event_engine.stop()
+
     def _register_event(self):
         self.event_engine.register(EVENT_ORDER, self.on_order)
         self.event_engine.register(EVENT_CONTRACT, self.on_contract)
@@ -342,13 +309,83 @@ class RQVNPYEngine(object):
 
         self._env.event_bus.add_listener(EVENT.POST_UNIVERSE_CHANGED, self.on_universe_changed)
 
-    def _get_contract_from_order_book_id(self, order_book_id):
+    # ------------------------------------ 其他 ------------------------------------
+    def on_log(self, event):
+        log = event.dict_['data']
+        system_log.debug(log.logContent)
+
+    def _get_account_for(self, order_book_id):
+        # hard code
+        account_type = ACCOUNT_TYPE.FUTURE
+        return self._env.broker.get_account()[account_type]
+
+
+class DataCache(object):
+    def __init__(self):
+        self._order_dict = {}
+        self._vnpy_order_dict = {}
+        self._open_order_dict = {}
+
+        self._contract_dict = {}
+
+        self._tick_snapshot_dict = {}
+
+    @staticmethod
+    def _order_book_id(symbol):
+        if len(symbol) < 4:
+            return None
+        if symbol[-4] not in '0123456789':
+            order_book_id = symbol[:2] + '1' + symbol[-3:]
+        else:
+            order_book_id = symbol
+        return order_book_id.upper()
+
+    @property
+    def open_orders(self):
+        return list(self._open_order_dict.values())
+
+    def put_order(self, vnpy_order_id, order):
+        self._order_dict[vnpy_order_id] = order
+
+    def put_open_order(self, vnpy_order_id, order):
+        self._open_order_dict[vnpy_order_id] = order
+
+    def put_vnpy_order(self, order_id, vnpy_order):
+        self._vnpy_order_dict[order_id] = vnpy_order
+
+    def put_contract(self, contract):
+        order_book_id = self._order_book_id(contract.symbol)
+        self._contract_dict[order_book_id] = contract
+
+    def del_open_order(self, vnpy_order_id):
+        if vnpy_order_id in self._open_order_dict:
+            del self._open_order_dict[vnpy_order_id]
+
+    def get_order(self, vnpy_order_id):
+        try:
+            return self._order_dict[vnpy_order_id]
+        except KeyError:
+            return
+
+    def get_vnpy_order(self, order_id):
+        try:
+            return self._vnpy_order_dict[order_id]
+        except KeyError:
+            return
+
+    def get_contract(self, order_book_id):
         try:
             return self._contract_dict[order_book_id]
         except KeyError:
-            system_log.error('No such contract whose order_book_id is {} ', order_book_id)
+            system_log.error('Cannot find such contract whose order_book_id is {} ', order_book_id)
 
-    def _get_account_for(self, order):
-        # FIXME: hardcode
-        account_type = ACCOUNT_TYPE.FUTURE
-        return self._env.broker.get_account()[account_type]
+    def put_tick_snapshot(self, tick):
+        order_book_id = tick['order_book_id']
+        self._tick_snapshot_dict[order_book_id] = tick
+
+    def get_tick_snapshot(self, order_book_id):
+        try:
+            return self._tick_snapshot_dict[order_book_id]
+        except KeyError:
+            system_log.error('Cannot find such tick whose order_book_id is {} ', order_book_id)
+            return None
