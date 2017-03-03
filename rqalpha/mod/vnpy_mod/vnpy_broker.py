@@ -29,26 +29,14 @@ class VNPYBroker(AbstractBroker):
 
         self._account_cache = None
 
-    def init_account(self, account_json):
-        '''
-        self._accounts = {
-            ACCOUNT_TYPE.FUTURE: FutureAccount(
-                self._env,
-                self._env.config.base.start_date,
-                self._env.config.base.future_starting_cash
-            )}
-        self._accounts[ACCOUNT_TYPE.FUTURE].set_state(account_json)
-        '''
-        self._accounts = init_accounts(self._env)
-
     def after_trading(self):
-        self._vnpy_engine.exit()
+        pass
 
     def before_trading(self):
-        self._engine.connect()
+        pass
 
     def get_accounts(self):
-        return self._accounts
+        return self._engine.accounts
 
     def get_open_orders(self):
         return self._engine.open_orders

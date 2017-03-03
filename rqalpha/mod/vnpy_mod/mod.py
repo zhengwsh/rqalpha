@@ -19,7 +19,7 @@ class VNPYMod(AbstractMod):
         self._env.set_broker(VNPYBroker(env, self._engine))
         self._env.set_event_source(VNPYEventSource(env, self._engine))
         self._env.set_data_source(VNPYDataSource(env, self._engine))
-        self._engine.connect()
+        self._engine.do_init()
 
     def tear_down(self, code, exception=None):
         self._engine.exit()
