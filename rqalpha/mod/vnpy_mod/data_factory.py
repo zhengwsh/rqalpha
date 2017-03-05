@@ -132,8 +132,6 @@ class RQVNFuturePosition(FuturePosition):
             self._buy_today_holding_list = [(vnpy_position.price, vnpy_position.position - vnpy_position.ydPosition)]
             if vnpy_position.ydPosition > 0:
                 self._buy_old_holding_list = [vnpy_position.price, vnpy_position.ydPosition]
-            # self._buy_daily_realized_pnl
-            # self._buy_avg_open_price
             # self._buy_market_value
         elif vnpy_position.direction == DIRECTION_SHORT:
             self._buy_close_order_quantity = vnpy_position.close
@@ -141,9 +139,15 @@ class RQVNFuturePosition(FuturePosition):
             self._sell_today_holding_list = [(vnpy_position.price, vnpy_position.position - vnpy_position.ydPosition)]
             if vnpy_position.ydPosition > 0:
                 self._sell_old_holding_list = [vnpy_position.price, vnpy_position.ydPosition]
-            # self._sell_daily_realized_pnl
-            # self._sell_avg_open_price
             # self._sell_market_value
+
+    def update_with_position_extra(self, vnpy_position_extra):
+        if vnpy_position_extra.direction in [DIRECTION_LONG, DIRECTION_NET]:
+            self._buy_daily_realized_pnl = vnpy_position_extra.closeProfit
+            self._buy_avg_open_price = vnpy_position_extra.openCost
+        elif vnpy_position_extra.direction == DIRECTION_SHORT:
+            self._sell_avg_open_price = vnpy_position_extra.closeProfit
+            self._sell_daily_realized_pnl = vnpy_position_extra.closeProfit
 
     def update_with_hist_trade(self, trade):
         order = trade.order
@@ -221,6 +225,7 @@ class RQVNCount(FutureAccount):
         self._vnpy_trade_cache = []
 
         self._position_cache = {}
+        self._position_extra_cache = {}
 
         self._vnpy_account_cache = None
 
@@ -265,11 +270,17 @@ class RQVNCount(FutureAccount):
     def put_vnpy_hist_trade(self, trade):
         self._vnpy_trade_cache.append(trade)
 
-    def put_vnpy_position(self, vnpy_position):
+    def put_vnpy_position(self, vnpy_position, contract):
         order_book_id = _order_book_id(vnpy_position.symbol)
         if order_book_id not in self._position_cache:
-            self._position_cache[order_book_id] = VNPYFuturePosition(order_book_id)
+            self._position_cache[order_book_id] = RQVNFuturePosition(order_book_id, contract)
         self._position_cache[order_book_id].update_with_vnpy_position(vnpy_position)
+
+    def put_vnpy_position_extra(self, vnpy_position_extra, contract):
+        order_book_id = _order_book_id(vnpy_position_extra.symbol)
+        if order_book_id not in self._position_cache:
+            self._position_cache[order_book_id] = RQVNFuturePosition(order_book_id, contract)
+        self._position_extra_cache[order_book_id].update_with_position_extra(vnpy_position_extra)
 
     def put_vnpy_account(self, vnpy_account):
         self._vnpy_account_cache = vnpy_account

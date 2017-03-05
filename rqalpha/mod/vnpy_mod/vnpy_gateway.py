@@ -3,15 +3,18 @@ from time import sleep, time
 
 from .vn_trader.ctpGateway.ctpGateway import CtpGateway
 from .vn_trader.ctpGateway.ctpGateway import CtpTdApi, CtpMdApi
-from .vn_trader.ctpGateway.ctpGateway import directionMapReverse
-from .vn_trader.vtGateway import VtBaseData, VtContractData, VtPositionData
+from .vn_trader.ctpGateway.ctpGateway import directionMapReverse, posiDirectionMapReverse
+from .vn_trader.vtGateway import VtBaseData, VtContractData
 from .vn_trader.vtConstant import EMPTY_FLOAT, EMPTY_INT, EMPTY_STRING, EMPTY_UNICODE
+from .vn_trader.eventEngine import Event
+
+EVENT_POSITION_EXTRA = 'ePositionExtra'
 
 
 # ------------------------------------ 自定义或扩展数据类型 ------------------------------------
-class PositionMoreFields(VtBaseData):
+class PositionExtra(VtBaseData):
     def __init__(self):
-        super(PositionMoreFields, self).__init__()
+        super(PositionExtra, self).__init__()
         self.symbol = EMPTY_STRING
         self.direction = EMPTY_STRING
 
@@ -23,11 +26,7 @@ class PositionMoreFields(VtBaseData):
 class RQCTPTdApi(CtpTdApi):
     def __init__(self, gateway):
         super(RQCTPTdApi, self).__init__(gateway)
-        self.pos_detail_buffer_dict = {}
-
-    def onRspQryInvestorPositionDetail(self, data, error, n, last):
-        pos_detail = VtPositionDetailData()
-        pos_detail.symbol = data['InstrumentId']
+        self.posExtraDict = {}
 
     def onRspQryInstrument(self, data, error, n, last):
         super(RQCTPTdApi, self).onRspQryInstrument(data, error, n, last)
@@ -40,8 +39,21 @@ class RQCTPTdApi(CtpTdApi):
 
     def onRspQryInvestorPosition(self, data, error, n, last):
         super(RQCTPTdApi, self).onRspQryInvestorPosition(data, error, n, last)
+        positionName = '.'.join([data['InstrumentID'], data['PosiDirection']])
+
+        posExtra = PositionExtra()
+        posExtra.symbol = data['InstrumentID']
+        posExtra.direction = posiDirectionMapReverse.get(data['PosiDirection'])
+        posExtra.closeProfit = data["CloseProfit"]
+        posExtra.openCost = data["OpenCost"]
+
+        self.posExtraDict[positionName] = posExtra
+
         # TODO: 扩展 position 字段, 继承 vnpy 中原有 position 类或另外实现一个其他字段的类
         if last:
+            for posExtra in self.posExtraDict.values():
+                self.gateway.onPositionExtra(posExtra)
+
             self.gateway.status.position_success()
 
 
@@ -75,11 +87,10 @@ class RQVNCTPGateway(CtpGateway):
         self.qryPosition()
         self.status.wail_until_position()
 
-    def qry_position_detail(self):
-        self.tdApi.qry_position_detail()
-
-    def init_complete(self):
-        self.inited = True
+    def onPositionExtra(self, posExtra):
+        event = Event(type_=EVENT_POSITION_EXTRA)
+        event.dict_['data'] = posExtra
+        self.eventEngine.put(event)
 
 
 class InitStatus(object):
@@ -128,3 +139,4 @@ class InitStatus(object):
 
     def position_success(self):
         self._position = True
+

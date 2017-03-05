@@ -19,6 +19,7 @@ from .vn_trader.vtConstant import STATUS_NOTTRADED, STATUS_PARTTRADED, STATUS_AL
 from .vn_trader.vtConstant import CURRENCY_CNY
 from .vn_trader.vtConstant import PRODUCT_FUTURES
 
+from .vnpy_gateway import EVENT_POSITION_EXTRA
 from .data_factory import RQVNOrder, RQVNTrade, RQVNCount
 from .utils import SIDE_MAPPING, ORDER_TYPE_MAPPING, POSITION_EFFECT_MAPPING
 
@@ -263,12 +264,22 @@ class RQVNPYEngine(object):
         order_book_id = _order_book_id(vnpy_position.symbol)
         account = self._get_account_for(order_book_id)
         if not account.inited:
-            account.put_vnpy_position(vnpy_position)
+            contract = self._data_cache.get_contract(order_book_id)
+            account.put_vnpy_position(vnpy_position, contract)
+
+    def on_position_extra(self, event):
+        vnpy_position_extra = event.dict_['data']
+        system_log.debug("on_position_extra {}", vnpy_position_extra.__dict__)
+        order_book_id = _order_book_id(vnpy_position_extra.symbol)
+        account = self._get_account_for(order_book_id)
+        if not account.inited:
+            contract = self._data_cache.get_contract(order_book_id)
+            account.put_vnpy_position_extra(vnpy_position_extra, contract)
 
     def on_account(self, event):
         vnpy_account = event.dict_['data']
         system_log.debug("on_account {}", vnpy_account.__dict__)
-        # hardcode
+        # hard code
         account = self.accounts[ACCOUNT_TYPE.FUTURE]
         if not account.inited:
             account.put_vnpy_account(vnpy_account)
@@ -310,6 +321,7 @@ class RQVNPYEngine(object):
         self.event_engine.register(EVENT_TICK, self.on_tick)
         self.event_engine.register(EVENT_LOG, self.on_log)
         self.event_engine.register(EVENT_ACCOUNT, self.on_account)
+        self.event_engine.register(EVENT_POSITION_EXTRA, self.on_position_extra)
 
         self._env.event_bus.add_listener(EVENT.POST_UNIVERSE_CHANGED, self.on_universe_changed)
 

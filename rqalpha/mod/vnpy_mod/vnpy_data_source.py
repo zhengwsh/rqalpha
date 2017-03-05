@@ -23,3 +23,5 @@ class VNPYDataSource(BaseDataSource):
         s = date.today()
         e = date.fromtimestamp(2147483647)
         return s, e
+
+    # TODO: 增加get_all_instruments()，从CTP获取合约信息
