@@ -82,10 +82,12 @@ class RQVNCTPGateway(CtpGateway):
     def do_init(self, login_dict):
         self.connect(login_dict)
         self.status.wait_until_contract()
+        sleep(0.5)
         self.qryAccount()
         self.status.wait_until_account()
+        sleep(0.5)
         self.qryPosition()
-        self.status.wail_until_position()
+        self.status.wait_until_position()
 
     def onPositionExtra(self, posExtra):
         event = Event(type_=EVENT_POSITION_EXTRA)

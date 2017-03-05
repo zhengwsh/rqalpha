@@ -207,7 +207,7 @@ class RQVNFuturePosition(FuturePosition):
                 self._sell_close_order_value += inc_order_value
 
     def final_update(self):
-        self._daily_realized_pnl = self._buy_daily_realized_pnl + _sell_daily_realized_pnl
+        self._daily_realized_pnl = self._buy_daily_realized_pnl + self._sell_daily_realized_pnl
 
 
 class RQVNPortfolio(FuturePortfolio):
@@ -225,7 +225,6 @@ class RQVNCount(FutureAccount):
         self._vnpy_trade_cache = []
 
         self._position_cache = {}
-        self._position_extra_cache = {}
 
         self._vnpy_account_cache = None
 
@@ -280,7 +279,7 @@ class RQVNCount(FutureAccount):
         order_book_id = _order_book_id(vnpy_position_extra.symbol)
         if order_book_id not in self._position_cache:
             self._position_cache[order_book_id] = RQVNFuturePosition(order_book_id, contract)
-        self._position_extra_cache[order_book_id].update_with_position_extra(vnpy_position_extra)
+        self._position_cache[order_book_id].update_with_position_extra(vnpy_position_extra)
 
     def put_vnpy_account(self, vnpy_account):
         self._vnpy_account_cache = vnpy_account
