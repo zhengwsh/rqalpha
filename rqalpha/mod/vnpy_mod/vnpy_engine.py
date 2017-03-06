@@ -13,7 +13,7 @@ from rqalpha.const import ACCOUNT_TYPE, ORDER_STATUS
 
 from .vn_trader.eventEngine import EventEngine2
 from .vn_trader.vtGateway import VtOrderReq, VtCancelOrderReq, VtSubscribeReq
-from .vn_trader.eventType import EVENT_CONTRACT, EVENT_ORDER, EVENT_TRADE, EVENT_TICK, EVENT_LOG, EVENT_ACCOUNT
+from .vn_trader.eventType import EVENT_CONTRACT, EVENT_ORDER, EVENT_TRADE, EVENT_TICK, EVENT_LOG, EVENT_ACCOUNT, EVENT_POSITION
 from .vn_trader.vtConstant import STATUS_NOTTRADED, STATUS_PARTTRADED, STATUS_ALLTRADED, STATUS_CANCELLED, STATUS_UNKNOWN
 
 from .vn_trader.vtConstant import CURRENCY_CNY
@@ -304,12 +304,6 @@ class RQVNPYEngine(object):
                 continue
             account.do_init(self._data_cache.get_contract_dict())
 
-    def connect(self):
-        self.vnpy_gateway.connect(dict(getattr(self._config, self.gateway_type)))
-        # hard code
-        sleep(50)
-        self.init_account()
-
     def exit(self):
         self.vnpy_gateway.close()
         self.event_engine.stop()
@@ -321,6 +315,7 @@ class RQVNPYEngine(object):
         self.event_engine.register(EVENT_TICK, self.on_tick)
         self.event_engine.register(EVENT_LOG, self.on_log)
         self.event_engine.register(EVENT_ACCOUNT, self.on_account)
+        self.event_engine.register(EVENT_POSITION, self.on_positions)
         self.event_engine.register(EVENT_POSITION_EXTRA, self.on_position_extra)
 
         self._env.event_bus.add_listener(EVENT.POST_UNIVERSE_CHANGED, self.on_universe_changed)

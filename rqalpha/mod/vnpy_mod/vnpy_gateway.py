@@ -40,7 +40,6 @@ class RQCTPTdApi(CtpTdApi):
     def onRspQryInvestorPosition(self, data, error, n, last):
         super(RQCTPTdApi, self).onRspQryInvestorPosition(data, error, n, last)
         positionName = '.'.join([data['InstrumentID'], data['PosiDirection']])
-
         posExtra = PositionExtra()
         posExtra.symbol = data['InstrumentID']
         posExtra.direction = posiDirectionMapReverse.get(data['PosiDirection'])
@@ -49,7 +48,6 @@ class RQCTPTdApi(CtpTdApi):
 
         self.posExtraDict[positionName] = posExtra
 
-        # TODO: 扩展 position 字段, 继承 vnpy 中原有 position 类或另外实现一个其他字段的类
         if last:
             for posExtra in self.posExtraDict.values():
                 self.gateway.onPositionExtra(posExtra)
@@ -80,14 +78,15 @@ class RQVNCTPGateway(CtpGateway):
         self.status = InitStatus()
 
     def do_init(self, login_dict):
+        # TODO: 加入超时重试功能
         self.connect(login_dict)
-        self.status.wait_until_contract()
-        sleep(0.5)
+        self.status.wait_until_contract(timeout=10)
+        sleep(1)
         self.qryAccount()
-        self.status.wait_until_account()
-        sleep(0.5)
+        self.status.wait_until_account(timeout=10)
+        sleep(1)
         self.qryPosition()
-        self.status.wait_until_position()
+        self.status.wait_until_position(timeout=10)
 
     def onPositionExtra(self, posExtra):
         event = Event(type_=EVENT_POSITION_EXTRA)
