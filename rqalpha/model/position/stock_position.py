@@ -149,5 +149,12 @@ class StockPosition(BasePosition):
         portfolio = accounts[ACCOUNT_TYPE.STOCK].portfolio
         return 0 if portfolio.portfolio_value == 0 else self._position_value / portfolio.portfolio_value
 
+    @property
+    def pnl(self):
+        """
+        【float】持仓累计盈亏
+        """
+        return self._market_value + self._sell_trade_value - self._buy_trade_value
+
     def _cal_close_today_amount(self, trade_amount, side):
         return 0
