@@ -1,0 +1,569 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="81089b73-13b5-48a6-acbb-70a02371db99" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.coveragerc" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.gitignore" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/.travis.yml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/CHANGELOG.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/LICENSE" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/MANIFEST.in" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/README.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/TODO.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/babel.cfg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/Makefile" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/README.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/make.bat" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/_static/RQAlpha_structure.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/_static/buy_and_hold.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/_static/golden_cross.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/_static/logo.jpg" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/_static/progress_bar.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/_templates/layout.html" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/api/base_api.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/api/config.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/api/extend_api.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/conf.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/development/basic_concept.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/development/event_source.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/development/make_contribute.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/development/mod.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/faq.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/history.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/index.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/intro/detail_install.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/intro/examples.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/intro/install.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/intro/overview.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/intro/tutorial.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/docs/source/todo.rst" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/messages.pot" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/requirements.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/VERSION.txt" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/__main__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/api_base.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/api_future.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/api_stock.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/ext.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/helper.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/api/names.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/config_template.yml" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/const.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/core/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/core/global_var.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/core/strategy.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/core/strategy_context.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/core/strategy_loader.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/core/strategy_universe.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/base_data_source.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/converter.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/data_proxy.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/date_set.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/daybar_store.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/dividend_store.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/instrument_mixin.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/instrument_store.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/risk_free_helper.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/trading_dates_mixin.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/trading_dates_store.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/data/yield_curve_store.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/environment.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/events.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/IF_macd.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/buy_and_hold.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/golden_cross.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/macd.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/pair_trading.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/rsi.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/technical_analysis/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/technical_analysis/dma.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/technical_analysis/golden_cross.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/test_pt.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/examples/turtle.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/execution_context.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/interface.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/main.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/analyser/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/analyser/mod.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/funcat_api/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/funcat_api/mod.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/mod_handler.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/progress/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/progressive_output_csv/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/progressive_output_csv/mod.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/risk_manager/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/risk_manager/frontend_validator.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/risk_manager/mod.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simple_stock_realtime_trade/README.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simple_stock_realtime_trade/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simple_stock_realtime_trade/data_source.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simple_stock_realtime_trade/event_source.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simple_stock_realtime_trade/mod.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simple_stock_realtime_trade/utils.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simulation/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simulation/matcher.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simulation/mod.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simulation/simulation_broker.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/simulation/simulation_event_source.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/mod/utils.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/account/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/account/base_account.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/account/benchmark_account.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/account/future_account.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/account/mixed_account.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/account/stock_account.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/bar.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/commission.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/dividend.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/instrument.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/margin.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/order.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/portfolio/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/portfolio/base_portfolio.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/portfolio/future_portfolio.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/portfolio/stock_portfolio.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/position/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/position/base_position.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/position/future_position.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/position/stock_position.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/slippage.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/snapshot.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/tax.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/tick.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/model/trade.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/plot.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/resource/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/resource/ricequant-logo.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/user_module.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/arg_checker.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/cached_property.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/click_helper.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/config.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/datetime_func.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/default_future_info.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/dict_func.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/disk_persist_provider.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/exception.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/i18n.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/json.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/logger.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/persisit_helper.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/plot_store.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/proxy.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/report.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/repr.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/risk.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/scheduler.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/strategy_loader_help.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/translations/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/translations/zh_Hans_CN/LC_MESSAGES/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/translations/zh_Hans_CN/LC_MESSAGES/messages.mo" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/translations/zh_Hans_CN/LC_MESSAGES/messages.po" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/rqalpha/utils/translations/zh_Hans_CN/__init__.py" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/setup.py" afterPath="" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CoverageDataManager">
+    <SUITE FILE_PATH="coverage/rqalpha$autoRun.coverage" NAME="autoRun Coverage Results" MODIFIED="1489639694927" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+  </component>
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/main.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="535">
+              <caret line="318" column="0" lean-forward="false" selection-start-line="318" selection-start-column="0" selection-end-line="318" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/autoRun.py" />
+        <option value="$PROJECT_DIR$/main.py" />
+      </list>
+    </option>
+  </component>
+  <component name="JsBuildToolGruntFileManager" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsBuildToolPackageJson" detection-done="true" sorting="DEFINITION_ORDER" />
+  <component name="JsGulpfileManager">
+    <detection-done>true</detection-done>
+    <sorting>DEFINITION_ORDER</sorting>
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="x" value="54" />
+    <option name="y" value="-8" />
+    <option name="width" value="1874" />
+    <option name="height" value="1096" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+      <manualOrder />
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="rqalpha" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="rqalpha" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+      <pane id="Scratches" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="PyConsoleConfigurable.Python Console" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+  </component>
+  <component name="RunManager" selected="Python.autoRun">
+    <configuration default="false" name="autoRun" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/autoRun.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="DjangoTestsConfigurationType" factoryName="Django tests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="TARGET" value="" />
+      <option name="SETTINGS_FILE" value="" />
+      <option name="CUSTOM_SETTINGS" value="false" />
+      <option name="USE_OPTIONS" value="false" />
+      <option name="OPTIONS" value="" />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavaScriptTestRunnerProtractor" factoryName="Protractor">
+      <config-file value="" />
+      <node-interpreter value="project" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug">
+      <method />
+    </configuration>
+    <configuration default="true" type="PyBehaveRunConfigurationType" factoryName="Behave">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="ADDITIONAL_ARGS" value="" />
+      <method />
+    </configuration>
+    <configuration default="true" type="PyLettuceRunConfigurationType" factoryName="Lettuce">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="ADDITIONAL_ARGS" value="" />
+      <method />
+    </configuration>
+    <configuration default="true" type="PythonConfigurationType" factoryName="Python">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="Tox" factoryName="Tox">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <module name="rqalpha" />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="js.build_tools.npm" factoryName="npm">
+      <command value="run" />
+      <scripts />
+      <node-interpreter value="project" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Attests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Doctests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Nosetests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Unittests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PUREUNITTEST" value="true" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="py.test">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="rqalpha" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="testToRun" value="" />
+      <option name="keywords" value="" />
+      <option name="params" value="" />
+      <option name="USE_PARAM" value="false" />
+      <option name="USE_KEYWORD" value="false" />
+      <method />
+    </configuration>
+    <list size="1">
+      <item index="0" class="java.lang.String" itemvalue="Python.autoRun" />
+    </list>
+    <recent_temporary>
+      <list size="1">
+        <item index="0" class="java.lang.String" itemvalue="Python.autoRun" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false">
+    <option name="remove_strategy" value="false" />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="81089b73-13b5-48a6-acbb-70a02371db99" name="Default" comment="" />
+      <created>1489639573937</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1489639573937</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="54" y="-8" width="1874" height="1096" extended-state="7" />
+    <editor active="false" />
+    <layout>
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25248072" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32952183" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="processedProjectFiles" value="true" />
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager />
+    <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/autoRun.py" />
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="535">
+          <caret line="318" column="0" lean-forward="false" selection-start-line="318" selection-start-column="0" selection-end-line="318" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
